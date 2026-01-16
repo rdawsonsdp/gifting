@@ -17,42 +17,46 @@ function loadStaticProducts(): Product[] {
 }
 
 export async function GET() {
-  try {
-    // Try to fetch from Shopify first (if configured)
-    const { fetchGiftProducts } = await import('@/lib/shopify');
-    const products = await fetchGiftProducts();
-    return NextResponse.json({ products });
-  } catch (error) {
-    console.log('Shopify not configured, using static products');
-    
-    // Use static products from JSON file
-    const products = loadStaticProducts();
-    
-    if (products.length === 0) {
-      // Fallback to minimal mock products if JSON file fails
-      const mockProducts: Product[] = [
-        {
-          id: '1',
-          title: 'Assorted Chocolates',
-          description: 'A delightful mix of handcrafted chocolates',
-          price: 12.99,
-          image: '',
-          availableForTiers: [],
-          inventory: 100,
-        },
-        {
-          id: '2',
-          title: 'Caramel Collection',
-          description: 'Rich, creamy caramels in various flavors',
-          price: 15.99,
-          image: '',
-          availableForTiers: [],
-          inventory: 50,
-        },
-      ];
-      return NextResponse.json({ products: mockProducts });
-    }
-    
-    return NextResponse.json({ products });
+  // Using static products from JSON file
+  // Shopify product fetching is commented out for now
+  
+  // TODO: Uncomment below to enable Shopify product fetching
+  // try {
+  //   // Try to fetch from Shopify first (if configured)
+  //   const { fetchGiftProducts } = await import('@/lib/shopify');
+  //   const products = await fetchGiftProducts();
+  //   return NextResponse.json({ products });
+  // } catch (error) {
+  //   console.log('Shopify not configured, using static products');
+  // }
+  
+  // Use static products from JSON file
+  const products = loadStaticProducts();
+  
+  if (products.length === 0) {
+    // Fallback to minimal mock products if JSON file fails
+    const mockProducts: Product[] = [
+      {
+        id: '1',
+        title: 'Assorted Chocolates',
+        description: 'A delightful mix of handcrafted chocolates',
+        price: 12.99,
+        image: '',
+        availableForTiers: [],
+        inventory: 100,
+      },
+      {
+        id: '2',
+        title: 'Caramel Collection',
+        description: 'Rich, creamy caramels in various flavors',
+        price: 15.99,
+        image: '',
+        availableForTiers: [],
+        inventory: 50,
+      },
+    ];
+    return NextResponse.json({ products: mockProducts });
   }
+  
+  return NextResponse.json({ products });
 }

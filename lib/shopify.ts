@@ -41,6 +41,9 @@ async function shopifyRequest<T>(query: string, variables?: Record<string, any>)
   return result.data;
 }
 
+// Commented out - using static products for now
+// TODO: Uncomment to enable Shopify product fetching
+/*
 export async function fetchGiftProducts(): Promise<Product[]> {
   const query = `
     query {
@@ -111,6 +114,7 @@ export async function fetchGiftProducts(): Promise<Product[]> {
     throw error;
   }
 }
+*/
 
 export async function createDraftOrder(
   lineItems: Array<{ variantId: string; quantity: number }>,
