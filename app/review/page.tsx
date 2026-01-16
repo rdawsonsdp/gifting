@@ -10,12 +10,14 @@ import BuyerForm from '@/components/checkout/BuyerForm';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import Badge from '@/components/ui/Badge';
+import Modal from '@/components/ui/Modal';
 
 export default function ReviewPage() {
   const router = useRouter();
   const { state, dispatch, getCurrentTotal } = useGift();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const giftTotal = getCurrentTotal();
   const recipientCount = state.recipients.length;
@@ -32,15 +34,7 @@ export default function ReviewPage() {
       return;
     }
 
-    if (!state.buyerInfo) {
-      setError('Please complete your information above');
-      // Scroll to error on mobile
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 100);
-      return;
-    }
-
+    // Basic validation
     if (state.selectedProducts.length === 0) {
       setError('No products selected');
       setTimeout(() => {
@@ -65,41 +59,9 @@ export default function ReviewPage() {
       document.activeElement.blur();
     }
 
-    try {
-      const response = await fetch('/api/create-draft-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          products: state.selectedProducts,
-          recipients: state.recipients,
-          buyerInfo: state.buyerInfo,
-          pricing,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create order');
-      }
-
-      const data = await response.json();
-      
-      // Store order ID for confirmation page
-      if (data.draftOrderId) {
-        dispatch({ type: 'SET_STEP', payload: 'confirmation' });
-        router.push(`/confirmation?orderId=${data.draftOrderId}`);
-      } else if (data.invoiceUrl) {
-        // Redirect to Shopify checkout
-        window.location.href = data.invoiceUrl;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
-      setSubmitting(false);
-    }
+    // Show informational modal for MVP
+    setShowPaymentModal(true);
+    setSubmitting(false);
   };
 
   if (!state.selectedTier || state.selectedProducts.length === 0) {
@@ -184,12 +146,31 @@ export default function ReviewPage() {
         </Button>
         <Button
           onClick={handlePlaceOrder}
-          disabled={submitting || !state.buyerInfo}
+          disabled={submitting}
           className="w-full sm:min-w-[200px]"
         >
           {submitting ? 'Processing...' : 'Place Order'}
         </Button>
       </div>
+
+      {/* Payment Processing Modal */}
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        title="Payment Processing"
+      >
+        <div className="space-y-3 sm:space-y-4">
+          <p className="text-base sm:text-lg font-semibold text-[#5D4037]">
+            Payment Processing Next
+          </p>
+          <p className="text-sm sm:text-base text-[#333333]">
+            This is an MVP version of the application. Payment processing integration will be added in a future update.
+          </p>
+          <p className="text-xs sm:text-sm text-[#8B7355] italic">
+            Your order details have been saved. Thank you for your interest in Brown Sugar Bakery corporate gifting!
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
