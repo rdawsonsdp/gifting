@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,17 +8,12 @@ import { BuyerInfo } from '@/lib/types';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 
-// Helper to ensure value is always a string
-const stringPreprocess = (val: unknown): string => {
-  if (val === undefined || val === null || val === '') return '';
-  return String(val);
-};
-
+// Simple schema - defaultValues will ensure values are always strings
 const buyerSchema = z.object({
-  name: z.preprocess(stringPreprocess, z.string().min(1, 'Name is required')),
-  email: z.preprocess(stringPreprocess, z.string().min(1, 'Email is required').email('Invalid email address')),
-  phone: z.preprocess(stringPreprocess, z.string().min(10, 'Phone number is required')),
-  company: z.preprocess(stringPreprocess, z.string().min(1, 'Company name is required')),
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  phone: z.string().min(10, 'Phone number is required'),
+  company: z.string().min(1, 'Company name is required'),
 });
 
 type BuyerFormData = z.infer<typeof buyerSchema>;
@@ -28,17 +24,14 @@ interface BuyerFormProps {
 }
 
 export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
-  // Ensure all values are strings, never undefined
-  const safeInitialData = initialData ? {
-    name: String(initialData.name || ''),
-    email: String(initialData.email || ''),
-    phone: String(initialData.phone || ''),
-    company: String(initialData.company || ''),
-  } : {
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
+  
+  // Ensure all values are strings, never undefined - this is critical
+  const safeInitialData: BuyerFormData = {
+    name: initialData?.name ? String(initialData.name) : '',
+    email: initialData?.email ? String(initialData.email) : '',
+    phone: initialData?.phone ? String(initialData.phone) : '',
+    company: initialData?.company ? String(initialData.company) : '',
   };
 
   const {
@@ -51,9 +44,12 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
     reValidateMode: 'onSubmit',
     shouldUnregister: false,
     defaultValues: safeInitialData,
+    shouldFocusError: false,
   });
 
   const onFormSubmit = async (data: BuyerFormData) => {
+    setHasSubmitted(true);
+    
     // Dismiss keyboard on mobile after submission
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
@@ -91,9 +87,9 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-3 sm:space-y-4">
         <Input
           label="Full Name"
-          {...register('name', { valueAsString: true })}
+          {...register('name')}
           defaultValue={safeInitialData.name}
-          error={errors.name?.message}
+          error={hasSubmitted ? errors.name?.message : undefined}
           placeholder="John Doe"
           className="text-sm sm:text-base"
           autoComplete="name"
@@ -102,9 +98,9 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
         <Input
           label="Email"
           type="email"
-          {...register('email', { valueAsString: true })}
+          {...register('email')}
           defaultValue={safeInitialData.email}
-          error={errors.email?.message}
+          error={hasSubmitted ? errors.email?.message : undefined}
           placeholder="john@example.com"
           className="text-sm sm:text-base"
           autoComplete="email"
@@ -113,9 +109,9 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
         <Input
           label="Phone"
           type="tel"
-          {...register('phone', { valueAsString: true })}
+          {...register('phone')}
           defaultValue={safeInitialData.phone}
-          error={errors.phone?.message}
+          error={hasSubmitted ? errors.phone?.message : undefined}
           placeholder="(555) 123-4567"
           className="text-sm sm:text-base"
           autoComplete="tel"
@@ -123,9 +119,9 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
         />
         <Input
           label="Company"
-          {...register('company', { valueAsString: true })}
+          {...register('company')}
           defaultValue={safeInitialData.company}
-          error={errors.company?.message}
+          error={hasSubmitted ? errors.company?.message : undefined}
           placeholder="Acme Corporation"
           className="text-sm sm:text-base"
           autoComplete="organization"
