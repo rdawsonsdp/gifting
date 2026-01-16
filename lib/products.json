@@ -1,0 +1,447 @@
+{
+  "products": [
+    {
+      "id": "mini-cup-cakes-48-count",
+      "title": "Mini Cup Cakes (48 count)",
+      "description": "Bite-sized perfection featuring red velvet with cream cheese frosting (available with or without nuts), rich chocolate varieties, classic yellow cake with multiple frosting options, and our signature caramel trio including buttery caramel, smooth vanilla cream, and decadent turtle with caramel, chocolate, and pecans - each mini cupcake perfectly portioned for sampling multiple flavors, parties, or guilt-free indulgence with variety packs available to mix and match your favorites.",
+      "price": 78.98,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/IMG_4499.jpg?v=1757612904",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "VAR-MINI-CUP",
+      "handle": "mini-cup-cakes-48-count"
+    },
+    {
+      "id": "mini-cup-cakes",
+      "title": "Mini Cup Cakes (24 Pack)",
+      "description": "24 Count\nBite-sized perfection featuring red velvet with cream cheese frosting (available with or without nuts), rich chocolate varieties, classic yellow cake with multiple frosting options, and our signature caramel trio including buttery caramel, smooth vanilla cream, and decadent turtle with caramel, chocolate, and pecans - each mini cupcake perfectly portioned for sampling multiple flavors, parties, or guilt-free indulgence with variety packs available to mix and match your favorites.",
+      "price": 40.58,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/IMG_4502.jpg?v=1757612904",
+      "availableForTiers": [
+        "silver"
+      ],
+      "inventory": 100,
+      "variantId": "VAR-MINI-CUP",
+      "handle": "mini-cup-cakes"
+    },
+    {
+      "id": "pound-cakes",
+      "title": "Pound Cakes",
+      "description": "Pound Cakes from Brown Sugar Bakery",
+      "price": 44.58,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/BSB-Official-Logo-Coin.svg?v=1753908844",
+      "availableForTiers": [
+        "silver"
+      ],
+      "inventory": 100,
+      "variantId": "VAR-POUND-CA",
+      "handle": "pound-cakes"
+    },
+    {
+      "id": "4-layers-cake-vanilla-cream-carmel-8",
+      "title": "Vanilla Cream & Carmel - 8\", 4-Layer Cake",
+      "description": "Size: 8\" 4-layer Vanilla Cream &amp; Carmel Cake \nServes 14-24\nFree Shipping Nationwide\nNo deliveries Saturdays or Sundays\nOrders cannot be shipped to a P. O. Box\nCakes ships weekly on Monday, Tuesday, Wednesday \n\nCAKE WRITING IS NOT AVAILABLE ON NATIONWIDE SHIPPING CAKES.\n\n\n\nAccepting Orders for SHIPPING\n\nBrown Sugar Bakery ships their award-winning Caramel and German Chocolate Cakes on Monday, Tuesday, and Wednesday of each week.  To ensure freshness and timely delivery be sure to place your order the week prior to your event.\n\n\n\n***** PLEASE NOTE: Cake Decorating/Writing on Cakes is not available at this time*****\nAllergen Information: Contains eggs, dairy, flour/gluten, soy.",
+      "price": 79.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/cakeedits00004_ab0087a0-6df3-4100-b328-b9cebe7bb840.jpg?v=1742747334",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "VCCC-",
+      "handle": "4-layers-cake-vanilla-cream-carmel-8"
+    },
+    {
+      "id": "tortues-milk-chocolate-1",
+      "title": "Tortues - Milk Chocolate",
+      "description": "Our famous Milk Chocolate Tortues are filled with jumbo fancy pecans, creamy caramel, and smothered in pure milk chocolate.\n\n\"Tortues\" the perfect gift for any occasion.\n\nMade fresh daily. Never frozen. No preservatives.\n\nAvailable in 1/2 # custom wrapped box\n\n\nNet Weight: 8 oz / 227 grams\n\n\n\nINGREDIENTS: Sugar, Corn Syrup, Evaporated Milk, Chocolate (Sugar, Chocolate Liquor, Cocoa Butter, Milk Fat, Soya Lecithin (an emulsifier), Vanilla) Pecans, Dairy Cream &amp; Butter, Salt, and Natural Flavors. Allergen Information: Contains Milk and Tree Nut (Pecans) Manufactured on equipment that is shared with Tree Nuts, Peanuts and Milk products.",
+      "price": 14.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Milk-Chocolate-Turtles-12pk-Labledcopy2-Final_561b413b-9215-4e02-b536-fe252a87d091.jpg?v=1742747331",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "TMC6P-",
+      "handle": "tortues-milk-chocolate-1"
+    },
+    {
+      "id": "4-layer-cake-double-dark-chocolate-8",
+      "title": "Double Dark Chocolate 8\", 4-Layer Cake",
+      "description": "For the chocolate lover with a discerning palate. This isn't just chocolate cake—it's a deep, rich experience that unfolds with each bite. The kind of dessert that demands you slow down and savor the moment. Four layers of intense chocolate cake embraced by velvety frosting create a symphony that's both sophisticated and soul-satisfying. Some secrets are meant to be shared, and this recipe is one of our most treasured.\nCAKE WRITING IS NOT AVAILABLE ON NATIONWIDE SHIPPING CAKES.\nAllergen Information: Contains eggs, dairy, flour/gluten, soy.",
+      "price": 84.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/cake-doublechocolate_54c700b3-83a1-4300-87f6-b79e71e99542.jpg?v=1742747319",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "DDC-",
+      "handle": "4-layer-cake-double-dark-chocolate-8"
+    },
+    {
+      "id": "2-layers-cake-yellow-chocolate-8",
+      "title": "Yellow Chocolate 8\", 4-Layer Cake",
+      "description": "The perfect marriage of golden vanilla cake with rich chocolate frosting—it's comfort in its purest form. This cake reminds me of childhood birthdays and family gatherings where everyone would smile at that first sweet bite. There's something almost magical about this simple combination that speaks of home and happiness in every slice.\n \nAllergen Information: Contains eggs, dairy, flour/gluten, soy.",
+      "price": 79.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/ScreenShot2021-12-14at3.29.11PM_05f11575-9cad-4553-9754-558f50465f55.png?v=1742747309",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "YCC-",
+      "handle": "2-layers-cake-yellow-chocolate-8"
+    },
+    {
+      "id": "caramel-cake",
+      "title": "Caramel Cake  - 8\", 4-Layer Cake",
+      "description": "Sweet, buttery, Our Best Selling Cake!\nExperience the ultimate taste of Brown Sugar Bakery. Our prize winning recipe is popular any time of the year. \n\"This is the sort of cake that reminds me of Sunday afternoons spent with the family, where the sweet, homely scent of caramel would drift through the house and summon everyone to the kitchen. This isn’t just any cake—it’s a testament to days gone by, to the love stitched into every recipe passed down through generations. It’s the kind of treat that calls for a pause in the day, to sit and savor each bite while the world outside hustles by. A cake like this, well, it’s more than just a dessert, it's a slice of family tradition, as comforting as a warm hug from me to you.\"\nCAKE WRITING IS NOT AVAILABLE ON NATIONWIDE SHIPPING CAKES.\n\nSize: 8\" 4-layer Caramel Cake Serves 14-24 Free Shipping NationwideNo deliveries Saturdays or SundaysOrders cannot be shipped to a P. O. BoxCakes ships weekly on Monday, Tuesday, Wednesday \n\n\n\nAccepting Orders for SHIPPING\n\nBrown Sugar Bakery ships their award-winning Caramel and German Chocolate Cakes on Monday, Tuesday, and Wednesday of each week.  To ensure freshness and timely delivery be sure to place your order the week prior to your event.",
+      "price": 79.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Artboard24-Final.png?v=1742500240",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "CC-",
+      "handle": "caramel-cake"
+    },
+    {
+      "id": "german-chocolate-cake",
+      "title": "German Dark Chocolate Cake  - 8\", 4-Layer Cake",
+      "description": "Deep, complex, and utterly satisfying—our German Dark Chocolate cake is a testament to tradition. Layers of rich chocolate cake crowned with that distinctive coconut-pecan frosting that's been perfected over generations. It's the kind of dessert that doesn't just feed you; it tells you a story about heritage and the loving hands that first crafted this recipe years ago.\n\n\n CAKE WRITING IS NOT AVAILABLE ON NATIONWIDE SHIPPING CAKES.\n\n\nWeight: 8.00 lbs\n\n\n\nSize: 8\" 4-layer German Chocolate CakeServes 14-24Ships NationwideNo deliveries Saturdays or SundaysOrders cannot be shipped to a P.O.BoxCakes ships weekly on Monday, Tuesday, Wednesday\n\n\nAccepting Orders for SHIPPING\n\nBrown Sugar Bakery ships their award-winning Caramel Cake on Monday, Tuesday and Wednesday of each week. To ensure freshness and timely delivery be sure to place your order the week prior to your event.",
+      "price": 84.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Artboard25-Final.png?v=1742500236",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "GCC-",
+      "handle": "german-chocolate-cake"
+    },
+    {
+      "id": "raspberry-meltaways-24-piece",
+      "title": "Raspberry Melt-A-Ways",
+      "description": "Weight: 1.00 lbs\n\n\nRaspberry Melt-a-ways. A layer of creamy raspberry sandwiched between rich dark chocolate.\n\n\nMade fresh daily, never frozen. No preservatives.\n\n\nIngredients: Dark Chocolate, Sugar, Cocoa Butter, Chocolate Liquor, Milk Fat, Soya Lethicin (an emulsifier), Vanilla, White Chocolate, (Sugar, Hydrogenated Coconut Oil, Non-Fat Milk Powder, Oil of Peppermint, and all Natural Colors. Allergens: Contains Milk &amp; Soy Products. Manufactured on equipment shared with Peanuts, Tree Nuts (almonds, cashews, and pecans).",
+      "price": 24.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/BSB-Rasberry-Meltaway-24pk-Lablel-Final.png?v=1742500232",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "RSPM-",
+      "handle": "raspberry-meltaways-24-piece"
+    },
+    {
+      "id": "mint-melt-a-ways",
+      "title": "Mint Melt-A-Ways",
+      "description": "Mint Melt-a-ways. A layer of smooth creamy pastel-green mint chocolate sandwiched between rich dark chocolate.\n\n\nMade fresh daily, never frozen. No preservatives.",
+      "price": 24.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/BSB-Mint-Meltaway-24pk-Labeled-Final.png?v=1742500220",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "MMA-24",
+      "handle": "mint-melt-a-ways"
+    },
+    {
+      "id": "sea-salt-caramels",
+      "title": "Sea Salt Caramels",
+      "description": "Each piece filled with rich caramel dipped in our finest dark chocolate and sprinkled with sea salt.\nMade fresh daily, no preservatives.\nNet Weight:14 oz. (397g)\nINGREDIENTS: Sugar, Corn Syrup, Evaporated Milk, Chocolate (Sugar, Chocolate Liquor, Cocoa Butter, Milk Fat, Soya Lecithin (an emulsifier), Vanilla) Dairy Cream &amp; Butter, Salt and Natural Flavors.\nAllergen Information: Contains Milk. Manufactured on equipment that is shared with Tree Nuts, Peanuts and Milk products.",
+      "price": 24.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/BSB-SeaSalt-Caramels-24pk-Labeled-Final.jpg?v=1742500209",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "SSCM-",
+      "handle": "sea-salt-caramels"
+    },
+    {
+      "id": "tortue-assortment",
+      "title": "Tortue Assortment",
+      "description": "Our famous \"Tortue Assortment\" is filled with jumbo fancy pecans, creamy caramel, and smothered in pure white, dark &amp; milk chocolate.\n\n\"Tortues\" the perfect gift for any occasion.\n\nMade fresh daily. Never frozen. No preservatives.\n\n\n12-piece custom wrapped box\n\n\nNet Weight: 8 oz / 227 grams\n\n\nINGREDIENTS: Sugar, Corn Syrup, Evaporated Milk, Chocolate (Sugar, Chocolate Liquor, Cocoa Butter, Milk Fat, Soya Lecithin (an emulsifier), Vanilla) Pecans, Dairy Cream &amp; Butter, Salt and Natural Flavors. White chocolate: Sugar, hydrogenated palm kernel oil, nonfat milk powder, soy lecithin added as an emulsifier, monoglycerides, artificial color (titanium dioxide) and artificial flavor., German Chocolate Frosting: Coconut, Walnuts, Pecans, Sugar Butter, Evaporated Milk, Vanilla. Allergen Information: Contains Milk and Tree Nut (Pecans) Manufactured on equipment that is shared with Tree Nuts, Peanuts, and Milk products.",
+      "price": 24.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/BSB-Assorted-Turtles-12pk-Final.jpg?v=1742500200",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "TRTA-",
+      "handle": "tortue-assortment"
+    },
+    {
+      "id": "24-piece-cream-assortment",
+      "title": "Cream Assortment",
+      "description": "Cream Assortment from Brown Sugar Bakery",
+      "price": 24.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Assorted-Creams-24pk-Labled-Final_242ec4fc-6b55-4ffc-92c5-d5838f36ed7a.png?v=1742500190",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "CA24PC-",
+      "handle": "24-piece-cream-assortment"
+    },
+    {
+      "id": "cream-assortment-15-pieces",
+      "title": "Cream Assortment - 15 Pieces",
+      "description": "Cream Assortment - 15 Pieces from Brown Sugar Bakery",
+      "price": 14.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/IMG_1101_jpg.jpg?v=1742500176",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "CA15PC-",
+      "handle": "cream-assortment-15-pieces"
+    },
+    {
+      "id": "chocolate-covered-potato-chip",
+      "title": "Chocolate Covered Potato Chips",
+      "description": "Chocolate Covered Potato Chips",
+      "price": 10,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Web-BSB-ChocChips-Labled-SIngleFinal-v2.png?v=1742500171",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "CCPC-",
+      "handle": "chocolate-covered-potato-chip"
+    },
+    {
+      "id": "tortue-paw",
+      "title": "Tortue Paw",
+      "description": "Tortue Paw",
+      "price": 8,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/BSB-Turtle-Paw-Final.jpg?v=1742500165",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "TP-",
+      "handle": "tortue-paw"
+    },
+    {
+      "id": "peanut-butter-melt-a-ways-4-pieces",
+      "title": "Peanut Butter Melt-A-Ways - 4 Pieces",
+      "description": "Peanut Butter Melt-A-Ways - 4 Pieces",
+      "price": 4.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Web-BSB-PeanutButter-Meltaway-4pk-LablelFinal-v2.png?v=1742500159",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "PBMAW-",
+      "handle": "peanut-butter-melt-a-ways-4-pieces"
+    },
+    {
+      "id": "cream-assortment-4-pieces",
+      "title": "Cream Assortment - 4 Pieces",
+      "description": "Cream Assortment - 4 Pieces from Brown Sugar Bakery",
+      "price": 4.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Assorted-Creams-4pk-Labled-Final.jpg?v=1742500154",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "CA4PC-",
+      "handle": "cream-assortment-4-pieces"
+    },
+    {
+      "id": "tortueschocolate",
+      "title": "Tortues - Milk Chocolate",
+      "description": "Our famous Milk Chocolate Tortues are filled with jumbo fancy pecans, creamy caramel, and smothered in pure milk chocolate.\n\n\"Tortues\" the perfect gift for any occasion.\n\nMade fresh daily. Never frozen. No preservatives.\n\nAvailable in 1/2 # custom wrapped box\n\n\nNet Weight: 8 oz / 227 grams\n\n\n\nINGREDIENTS: Sugar, Corn Syrup, Evaporated Milk, Chocolate (Sugar, Chocolate Liquor, Cocoa Butter, Milk Fat, Soya Lecithin (an emulsifier), Vanilla) Pecans, Dairy Cream &amp; Butter, Salt, and Natural Flavors. Allergen Information: Contains Milk and Tree Nut (Pecans) Manufactured on equipment that is shared with Tree Nuts, Peanuts and Milk products.",
+      "price": 14.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Milk-Chocolate-Turtles-12pk-Labledcopy2-Final.jpg?v=1742500148",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "TMC6P-",
+      "handle": "tortueschocolate"
+    },
+    {
+      "id": "rainbow-sherbet-8-4-layer-cake-copy",
+      "title": "Yellow Chocolate",
+      "description": "The exquisite union of warm vanilla cake and decadent chocolate frosting - it's pure comfort. \nThis dessert brings back fond memories of childhood birthdays and family get-togethers, where the first mouthful would elicit a smile from everyone. There's a certain magic to this basic pairing that exudes feelings of home and joy with each and every slice.\n Information: Contains eggs, dairy, flour/gluten, soy.",
+      "price": 84.95,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/ScreenShot2021-12-14at3.29.11PM_ad6f5fbf-73d0-4620-bb02-2b55de67d995.png?v=1742500111",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "VAR-RAINBOW-",
+      "handle": "rainbow-sherbet-8-4-layer-cake-copy"
+    },
+    {
+      "id": "2-layers-cake-yellow-chocolate",
+      "title": "Yellow Chocolate",
+      "description": "The perfect marriage of golden vanilla cake with rich chocolate frosting—it's comfort in its purest form. This cake reminds me of childhood birthdays and family gatherings where everyone would smile at that first sweet bite. There's something almost magical about this simple combination that speaks of home and happiness in every slice.\n \nAllergen Information: Contains eggs, dairy, flour/gluten, soy.",
+      "price": 44.58,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/ScreenShot2021-12-14at3.29.11PM.png?v=1742306145",
+      "availableForTiers": [
+        "silver"
+      ],
+      "inventory": 100,
+      "variantId": "YCC-2",
+      "handle": "2-layers-cake-yellow-chocolate"
+    },
+    {
+      "id": "4-layer-cake-double-dark-chocolate",
+      "title": "Double Dark Chocolate",
+      "description": "For the chocolate lover with a discerning palate. This isn't just chocolate cake—it's a deep, rich experience that unfolds with each bite. The kind of dessert that demands you slow down and savor the moment. Four layers of intense chocolate cake embraced by velvety frosting create a symphony that's both sophisticated and soul-satisfying. Some secrets are meant to be shared, and this recipe is one of our most treasured.\n \nAllergen Information: Contains eggs, dairy, flour/gluten, soy.",
+      "price": 53.48,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/cake-doublechocolate.jpg?v=1742306115",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "DDC-2",
+      "handle": "4-layer-cake-double-dark-chocolate"
+    },
+    {
+      "id": "4-layer-cake-german-chocolate",
+      "title": "German Dark Chocolate",
+      "description": "Deep, complex, and utterly satisfying—our German Dark Chocolate cake is a testament to tradition. Layers of rich chocolate cake crowned with that distinctive coconut-pecan frosting that's been perfected over generations. It's the kind of dessert that doesn't just feed you; it tells you a story about heritage and the loving hands that first crafted this recipe years ago.",
+      "price": 53.48,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/cake-germanchocolate.jpg?v=1742306096",
+      "availableForTiers": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "GCC-2",
+      "handle": "4-layer-cake-german-chocolate"
+    },
+    {
+      "id": "4-layers-cake-vanilla-cream-carmel",
+      "title": "Vanilla Cream & Carmel",
+      "description": "Like a sweet lullaby for your taste buds, this delicate vanilla cake layered with silky cream and drizzled with our homemade caramel speaks of care and craftsmanship. It's the dessert equivalent of a warm embrace—comforting, familiar, yet somehow always special. The kind of cake that makes you want to linger at the table just a little longer, savoring both the flavor and the moment.",
+      "price": 44.58,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/cakeedits00004.jpg?v=1742306092",
+      "availableForTiers": [
+        "silver"
+      ],
+      "inventory": 100,
+      "variantId": "VCCC-2",
+      "handle": "4-layers-cake-vanilla-cream-carmel"
+    },
+    {
+      "id": "bronze-chocolate-sampler",
+      "title": "Chocolate Sampler Box",
+      "description": "A curated selection of our finest chocolates including Tortues, Melt-A-Ways, and Sea Salt Caramels. Perfect for appreciation gifts.",
+      "price": 19.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Milk-Chocolate-Turtles-12pk-Labledcopy2-Final_561b413b-9215-4e02-b536-fe252a87d091.jpg?v=1742747331",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "BRONZE-SAMPLER",
+      "handle": "bronze-chocolate-sampler"
+    },
+    {
+      "id": "bronze-caramel-collection",
+      "title": "Caramel Collection",
+      "description": "Rich, creamy caramels in various flavors - perfect for appreciation gifts",
+      "price": 18.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Artboard24-Final.png?v=1742500240",
+      "availableForTiers": [
+        "bronze"
+      ],
+      "inventory": 100,
+      "variantId": "BRONZE-CARAMEL",
+      "handle": "bronze-caramel-collection"
+    },
+    {
+      "id": "silver-premium-chocolate-box",
+      "title": "Premium Chocolate Gift Box",
+      "description": "An elegant assortment of our signature chocolates including Tortues, Melt-A-Ways, and premium selections",
+      "price": 44.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Milk-Chocolate-Turtles-12pk-Labledcopy2-Final_561b413b-9215-4e02-b536-fe252a87d091.jpg?v=1742747331",
+      "availableForTiers": [
+        "silver"
+      ],
+      "inventory": 100,
+      "variantId": "SILVER-PREMIUM",
+      "handle": "silver-premium-chocolate-box"
+    },
+    {
+      "id": "silver-mini-cupcake-variety",
+      "title": "Mini Cupcake Variety Pack",
+      "description": "24 count mini cupcakes featuring our signature flavors - perfect for office celebrations",
+      "price": 40.58,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/IMG_4499.jpg?v=1757612904",
+      "availableForTiers": [
+        "silver"
+      ],
+      "inventory": 100,
+      "variantId": "SILVER-CUPCAKE",
+      "handle": "silver-mini-cupcake-variety"
+    },
+    {
+      "id": "gold-deluxe-chocolate-assortment",
+      "title": "Deluxe Chocolate Assortment",
+      "description": "A premium collection featuring our finest chocolates, caramels, and specialty items in an elegant gift box",
+      "price": 89.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Milk-Chocolate-Turtles-12pk-Labledcopy2-Final_561b413b-9215-4e02-b536-fe252a87d091.jpg?v=1742747331",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "GOLD-DELUXE",
+      "handle": "gold-deluxe-chocolate-assortment"
+    },
+    {
+      "id": "gold-mini-cupcake-party-pack",
+      "title": "Mini Cupcake Party Pack",
+      "description": "48 count mini cupcakes with variety pack options - ideal for larger corporate celebrations",
+      "price": 78.98,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/IMG_4499.jpg?v=1757612904",
+      "availableForTiers": [
+        "gold"
+      ],
+      "inventory": 100,
+      "variantId": "GOLD-PARTY",
+      "handle": "gold-mini-cupcake-party-pack"
+    },
+    {
+      "id": "platinum-executive-gift-basket",
+      "title": "Executive Gift Basket",
+      "description": "Our most luxurious gift collection featuring premium chocolates, specialty items, and handcrafted treats",
+      "price": 199.99,
+      "image": "https://cdn.shopify.com/s/files/1/0688/2505/5479/files/Milk-Chocolate-Turtles-12pk-Labledcopy2-Final_561b413b-9215-4e02-b536-fe252a87d091.jpg?v=1742747331",
+      "availableForTiers": [
+        "platinum"
+      ],
+      "inventory": 100,
+      "variantId": "PLATINUM-EXEC",
+      "handle": "platinum-executive-gift-basket"
+    }
+  ]
+}
