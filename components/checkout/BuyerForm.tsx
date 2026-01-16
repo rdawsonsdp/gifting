@@ -28,6 +28,8 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<BuyerFormData>({
     resolver: zodResolver(buyerSchema),
+    mode: 'onSubmit', // Only validate on submit, not on change/blur
+    reValidateMode: 'onSubmit',
     defaultValues: initialData ? {
       name: initialData.name || '',
       email: initialData.email || '',
@@ -47,12 +49,28 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
       document.activeElement.blur();
     }
     
-    onSubmit({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      company: data.company,
-    });
+    const buyerInfo: BuyerInfo = {
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      company: data.company || '',
+    };
+
+    // Save to JSON file
+    try {
+      await fetch('/api/save-buyer-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buyerInfo),
+      });
+    } catch (error) {
+      console.error('Error saving buyer info to file:', error);
+      // Continue even if file save fails
+    }
+    
+    onSubmit(buyerInfo);
   };
 
   return (
