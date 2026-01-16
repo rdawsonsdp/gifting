@@ -8,10 +8,10 @@ import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 
 const buyerSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  phone: z.string().min(10, 'Phone number is required'),
-  company: z.string().min(1, 'Company name is required'),
+  name: z.preprocess((val) => val === undefined || val === null ? '' : String(val), z.string().min(1, 'Name is required')),
+  email: z.preprocess((val) => val === undefined || val === null ? '' : String(val), z.string().min(1, 'Email is required').email('Invalid email address')),
+  phone: z.preprocess((val) => val === undefined || val === null ? '' : String(val), z.string().min(10, 'Phone number is required')),
+  company: z.preprocess((val) => val === undefined || val === null ? '' : String(val), z.string().min(1, 'Company name is required')),
 });
 
 type BuyerFormData = z.infer<typeof buyerSchema>;
@@ -22,6 +22,19 @@ interface BuyerFormProps {
 }
 
 export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
+  // Ensure all values are strings, never undefined
+  const safeInitialData = initialData ? {
+    name: String(initialData.name || ''),
+    email: String(initialData.email || ''),
+    phone: String(initialData.phone || ''),
+    company: String(initialData.company || ''),
+  } : {
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+  };
+
   const {
     register,
     handleSubmit,
@@ -30,17 +43,8 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
     resolver: zodResolver(buyerSchema),
     mode: 'onSubmit', // Only validate on submit, not on change/blur
     reValidateMode: 'onSubmit',
-    defaultValues: initialData ? {
-      name: initialData.name || '',
-      email: initialData.email || '',
-      phone: initialData.phone || '',
-      company: initialData.company || '',
-    } : {
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-    },
+    defaultValues: safeInitialData,
+    values: safeInitialData, // Use values prop to ensure form always has current data
   });
 
   const onFormSubmit = async (data: BuyerFormData) => {
