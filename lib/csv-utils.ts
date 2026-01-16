@@ -65,7 +65,7 @@ export function validateRecipient(row: Record<string, string>): {
     return { recipient, errors: [] };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errorMessages = error.errors.map((e) => {
+      const errorMessages = error.issues.map((e) => {
         const field = e.path.join('.');
         return `${field}: ${e.message}`;
       });
