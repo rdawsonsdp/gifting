@@ -75,6 +75,75 @@ export function validateRecipient(row: Record<string, string>): {
   }
 }
 
+/**
+ * Normalize recipient data for duplicate comparison
+ * Removes extra spaces, converts to lowercase, normalizes zip codes
+ */
+function normalizeForComparison(recipient: Recipient): string {
+  const normalize = (str: string) => str.trim().toLowerCase().replace(/\s+/g, ' ');
+  const normalizeZip = (zip: string) => zip.replace(/[-\s]/g, '').substring(0, 5);
+  
+  return [
+    normalize(recipient.firstName),
+    normalize(recipient.lastName),
+    normalize(recipient.address1),
+    normalize(recipient.city),
+    recipient.state.toUpperCase(),
+    normalizeZip(recipient.zip),
+  ].join('|');
+}
+
+/**
+ * Check if two recipients are duplicates
+ * Compares based on: first name, last name, address1, city, state, and zip
+ */
+export function areRecipientsDuplicate(r1: Recipient, r2: Recipient): boolean {
+  return normalizeForComparison(r1) === normalizeForComparison(r2);
+}
+
+/**
+ * Find duplicate recipients within an array
+ * Returns a map of duplicate groups
+ */
+export function findDuplicates(recipients: Recipient[]): Map<string, Recipient[]> {
+  const duplicateMap = new Map<string, Recipient[]>();
+  const seen = new Map<string, Recipient[]>();
+  
+  recipients.forEach(recipient => {
+    const key = normalizeForComparison(recipient);
+    if (!seen.has(key)) {
+      seen.set(key, []);
+    }
+    seen.get(key)!.push(recipient);
+  });
+  
+  seen.forEach((group, key) => {
+    if (group.length > 1) {
+      duplicateMap.set(key, group);
+    }
+  });
+  
+  return duplicateMap;
+}
+
+/**
+ * Remove duplicates from an array of recipients, keeping the first occurrence
+ */
+export function removeDuplicates(recipients: Recipient[]): Recipient[] {
+  const seen = new Set<string>();
+  const unique: Recipient[] = [];
+  
+  recipients.forEach(recipient => {
+    const key = normalizeForComparison(recipient);
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(recipient);
+    }
+  });
+  
+  return unique;
+}
+
 export function parseCSV(csvText: string): Record<string, string>[] {
   // Simple CSV parser (Papa Parse will be used in component)
   const lines = csvText.split('\n').filter(line => line.trim());

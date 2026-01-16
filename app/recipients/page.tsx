@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGift } from '@/context/GiftContext';
 import { Recipient } from '@/lib/types';
 import { calculateFulfillmentFee, calculateOrderTotal } from '@/lib/pricing';
+import { removeDuplicates, findDuplicates, areRecipientsDuplicate } from '@/lib/csv-utils';
 import CSVUploader from '@/components/recipients/CSVUploader';
 import RecipientTable from '@/components/recipients/RecipientTable';
 import Card from '@/components/ui/Card';
@@ -17,6 +18,7 @@ export default function RecipientsPage() {
   const { state, dispatch, getCurrentTotal } = useGift();
   const [recipients, setRecipients] = useState<Recipient[]>(state.recipients);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const giftTotal = getCurrentTotal();
   const recipientCount = recipients.length;
@@ -26,9 +28,53 @@ export default function RecipientsPage() {
   const pricing = calculateOrderTotal(giftTotal, recipientCount);
 
   const handleUpload = (newRecipients: Recipient[]) => {
-    setRecipients(newRecipients);
-    dispatch({ type: 'SET_RECIPIENTS', payload: newRecipients });
     setError(null);
+    setWarning(null);
+    
+    // Check for duplicates within the uploaded CSV
+    const duplicatesInFile = findDuplicates(newRecipients);
+    const duplicateCount = Array.from(duplicatesInFile.values()).reduce((sum, group) => sum + group.length - 1, 0);
+    
+    if (duplicateCount > 0) {
+      setWarning(`Found ${duplicateCount} duplicate recipient(s) in the uploaded file. Duplicates will be removed.`);
+      // Remove duplicates from the uploaded file
+      newRecipients = removeDuplicates(newRecipients);
+    }
+    
+    // Check for duplicates against existing recipients
+    if (recipients.length > 0) {
+      const existingDuplicates: Recipient[] = [];
+      const uniqueNewRecipients: Recipient[] = [];
+      
+      newRecipients.forEach(newRecipient => {
+        const isDuplicate = recipients.some(existing => areRecipientsDuplicate(existing, newRecipient));
+        if (isDuplicate) {
+          existingDuplicates.push(newRecipient);
+        } else {
+          uniqueNewRecipients.push(newRecipient);
+        }
+      });
+      
+      if (existingDuplicates.length > 0) {
+        const duplicateNames = existingDuplicates
+          .slice(0, 3)
+          .map(r => `${r.firstName} ${r.lastName}`)
+          .join(', ');
+        const moreText = existingDuplicates.length > 3 ? ` and ${existingDuplicates.length - 3} more` : '';
+        setWarning(
+          `Found ${existingDuplicates.length} duplicate recipient(s) that already exist: ${duplicateNames}${moreText}. These will not be added.`
+        );
+      }
+      
+      // Merge unique new recipients with existing ones
+      const mergedRecipients = [...recipients, ...uniqueNewRecipients];
+      setRecipients(mergedRecipients);
+      dispatch({ type: 'SET_RECIPIENTS', payload: mergedRecipients });
+    } else {
+      // No existing recipients, just set the new ones (already deduplicated)
+      setRecipients(newRecipients);
+      dispatch({ type: 'SET_RECIPIENTS', payload: newRecipients });
+    }
   };
 
   const handleUpdate = (updatedRecipients: Recipient[]) => {
@@ -96,6 +142,11 @@ export default function RecipientsPage() {
         {error && (
           <Alert variant="error" className="mt-4">
             {error}
+          </Alert>
+        )}
+        {warning && (
+          <Alert variant="info" className="mt-4">
+            {warning}
           </Alert>
         )}
       </div>
