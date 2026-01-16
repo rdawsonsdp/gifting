@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card';
 
 const buyerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
   phone: z.string().min(10, 'Phone number is required'),
   company: z.string().min(1, 'Company name is required'),
 });
@@ -28,7 +28,17 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<BuyerFormData>({
     resolver: zodResolver(buyerSchema),
-    defaultValues: initialData,
+    defaultValues: initialData ? {
+      name: initialData.name || '',
+      email: initialData.email || '',
+      phone: initialData.phone || '',
+      company: initialData.company || '',
+    } : {
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+    },
   });
 
   const onFormSubmit = async (data: BuyerFormData) => {
