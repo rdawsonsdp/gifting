@@ -45,7 +45,7 @@ export default function RootLayout({
       >
         <GiftProvider>
           <Layout>
-            {children}
+        {children}
           </Layout>
         </GiftProvider>
       </body>
