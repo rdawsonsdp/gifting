@@ -12,12 +12,12 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center min-w-0 group hover:opacity-90 transition-opacity">
-            <div className="relative h-10 sm:h-12 md:h-14 w-10 sm:w-12 md:w-14 flex-shrink-0">
+            <div className="relative h-16 sm:h-20 md:h-24 w-16 sm:w-20 md:w-24 flex-shrink-0">
               <Image
                 src="/images/bsb-logo-full-color-cmyk-518px@300ppi.jpg"
                 alt="Brown Sugar Bakery"
-                width={56}
-                height={56}
+                width={96}
+                height={96}
                 className="h-full w-full object-contain"
                 priority
               />
