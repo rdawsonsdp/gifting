@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -10,11 +11,20 @@ export default function Header() {
     <header className="bg-[#5D4037] text-white shadow-md sticky top-0 z-50 safe-area-top">
       <div className="container mx-auto px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 min-w-0">
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-[var(--font-playfair)] truncate">
-              Brown Sugar Bakery
-            </h1>
-            <span className="text-xs sm:text-sm text-[#D4AF37]">Corporate Gifting</span>
+          <Link href="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0 group hover:opacity-90 transition-opacity">
+            <div className="relative h-10 sm:h-12 md:h-14 w-auto flex-shrink-0">
+              <Image
+                src="/images/bsb-logo-full-color-cmyk-518px@300ppi.jpg"
+                alt="Brown Sugar Bakery"
+                width={180}
+                height={56}
+                className="h-full w-auto object-contain"
+                priority
+              />
+            </div>
+            <div className="flex flex-col min-w-0 hidden sm:flex">
+              <span className="text-xs sm:text-sm text-[#D4AF37] font-semibold">Corporate Gifting</span>
+            </div>
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
             <Link 
