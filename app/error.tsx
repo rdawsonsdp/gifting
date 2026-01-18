@@ -20,7 +20,7 @@ export default function Error({
     <div className="container mx-auto px-4 py-12">
       <Card className="max-w-2xl mx-auto">
         <Alert variant="error" className="mb-6">
-          <h2 className="text-xl font-bold text-[#5D4037] mb-2 font-[var(--font-playfair)]">
+          <h2 className="text-xl font-bold text-[#E98D3D] mb-2 font-[var(--font-playfair)]">
             Something went wrong!
           </h2>
           <p className="text-[#333333]">

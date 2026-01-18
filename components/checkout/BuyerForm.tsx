@@ -81,7 +81,7 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
 
   return (
     <Card>
-      <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+      <h2 className="text-lg sm:text-xl font-bold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
         Your Information
       </h2>
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-3 sm:space-y-4">
@@ -131,7 +131,7 @@ export default function BuyerForm({ onSubmit, initialData }: BuyerFormProps) {
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base bg-[#5D4037] text-white hover:bg-[#4A3329] active:bg-[#3D2E24] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors min-h-[44px] touch-manipulation"
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base bg-[#E98D3D] text-white hover:bg-[#D67A2E] active:bg-[#C86F28] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors min-h-[44px] touch-manipulation"
             aria-label="Save buyer information"
           >
             {isSubmitting ? 'Saving...' : 'Save Information'}

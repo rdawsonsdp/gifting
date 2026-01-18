@@ -21,7 +21,7 @@ export default function Input({ label, error, className = '', ...props }: InputP
           w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border-2 text-sm sm:text-base
           ${error 
             ? 'border-[#E53935] focus:border-[#E53935] focus:ring-[#E53935]' 
-            : 'border-[#8B7355]/30 focus:border-[#5D4037] focus:ring-[#5D4037]'
+            : 'border-[#8B7355]/30 focus:border-[#E98D3D] focus:ring-[#E98D3D]'
           }
           bg-white text-[#333333]
           focus:outline-none focus:ring-2 focus:ring-offset-1

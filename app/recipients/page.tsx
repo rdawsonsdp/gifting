@@ -107,7 +107,7 @@ export default function RecipientsPage() {
         <Badge variant={state.selectedTier.id as 'bronze' | 'silver' | 'gold' | 'platinum'} className="mb-3 sm:mb-4">
           {state.selectedTier.name} Tier
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#5D4037] mb-2 font-[var(--font-playfair)]">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#E98D3D] mb-2 font-[var(--font-playfair)]">
           Add Recipients
         </h1>
         <p className="text-sm sm:text-base text-[#333333]">
@@ -117,7 +117,7 @@ export default function RecipientsPage() {
 
       {/* Gift Summary */}
       <Card className="mb-6 sm:mb-8">
-        <h2 className="text-base sm:text-lg font-semibold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+        <h2 className="text-base sm:text-lg font-semibold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
           Your Gift Summary
         </h2>
         <div className="space-y-2">
@@ -128,7 +128,7 @@ export default function RecipientsPage() {
             </div>
           ))}
           <div className="border-t border-[#8B7355]/30 pt-2 mt-2">
-            <div className="flex justify-between font-semibold text-sm sm:text-base text-[#5D4037]">
+            <div className="flex justify-between font-semibold text-sm sm:text-base text-[#E98D3D]">
               <span>Gift Total:</span>
               <span>${giftTotal.toFixed(2)}</span>
             </div>
@@ -161,7 +161,7 @@ export default function RecipientsPage() {
       {/* Pricing Summary */}
       {recipients.length > 0 && (
         <Card className="mb-6 sm:mb-8">
-          <h2 className="text-base sm:text-lg font-semibold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+          <h2 className="text-base sm:text-lg font-semibold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
             Pricing Summary
           </h2>
           <div className="space-y-2 text-xs sm:text-sm">
@@ -186,7 +186,7 @@ export default function RecipientsPage() {
                 <span className="pr-2">Fulfillment ({recipientCount} × ${pricing.perRecipientFee.toFixed(2)}):</span>
                 <span className="whitespace-nowrap">${pricing.fulfillmentSubtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between font-bold text-base sm:text-lg text-[#5D4037] mt-2">
+              <div className="flex justify-between font-bold text-base sm:text-lg text-[#E98D3D] mt-2">
                 <span>Total:</span>
                 <span className="whitespace-nowrap">${pricing.total.toFixed(2)}</span>
               </div>

@@ -87,14 +87,14 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
 
   return (
     <Card>
-      <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+      <h2 className="text-lg sm:text-xl font-bold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
         Upload Recipient List
       </h2>
       
       <div
         className={`
           border-2 border-dashed rounded-lg p-6 sm:p-8 text-center
-          ${isDragging ? 'border-[#5D4037] bg-[#E6E6FA]/30' : 'border-[#8B7355]/30'}
+          ${isDragging ? 'border-[#E98D3D] bg-[#E6E6FA]/30' : 'border-[#8B7355]/30'}
           transition-colors duration-200
         `}
         onDragOver={(e) => {
@@ -106,7 +106,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
       >
         {uploading ? (
           <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5D4037] mb-2"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E98D3D] mb-2"></div>
             <p className="text-sm sm:text-base text-[#333333]">Processing CSV...</p>
           </div>
         ) : (
@@ -128,7 +128,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
               Drag and drop your CSV file here, or
             </p>
             <label className="cursor-pointer">
-              <span className="text-[#5D4037] font-semibold hover:text-[#4A3329] text-sm sm:text-base">
+              <span className="text-[#E98D3D] font-semibold hover:text-[#D67A2E] text-sm sm:text-base">
                 browse to upload
               </span>
               <input

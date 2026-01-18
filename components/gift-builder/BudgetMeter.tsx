@@ -13,7 +13,7 @@ export default function BudgetMeter({
 }: BudgetMeterProps) {
   return (
     <div className="w-full">
-      <h3 className="text-base sm:text-lg font-semibold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+      <h3 className="text-base sm:text-lg font-semibold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
         Budget Progress
       </h3>
       <ProgressBar min={minBudget} max={maxBudget} current={currentSpend} />

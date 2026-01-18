@@ -10,7 +10,7 @@ module.exports = {
       colors: {
         // Brown Sugar Bakery Brand Colors (enhanced with restaurant skill patterns)
         cream: '#FFF8E7',
-        'primary-brown': '#5D4037',
+        'primary-brown': '#E98D3D',
         'accent-gold': '#D4AF37',
         lavender: '#E6E6FA',
         'light-brown': '#8B7355',

@@ -8,7 +8,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-[#5D4037] text-white shadow-md sticky top-0 z-50 safe-area-top">
+    <header className="bg-[#E98D3D] text-white shadow-md sticky top-0 z-50 safe-area-top">
       <div className="container mx-auto px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center min-w-0 group hover:opacity-90 transition-opacity">
@@ -34,7 +34,7 @@ export default function Header() {
             </Link>
           </nav>
           <button
-            className="md:hidden p-2 hover:bg-[#4A3329] rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="md:hidden p-2 hover:bg-[#D67A2E] rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}

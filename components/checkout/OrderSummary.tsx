@@ -24,13 +24,13 @@ export default function OrderSummary({
 
   return (
     <Card>
-      <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+      <h2 className="text-lg sm:text-xl font-bold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
         Order Summary
       </h2>
 
       {/* Gift Contents */}
       <div className="mb-4 sm:mb-6">
-        <h3 className="font-semibold text-[#5D4037] mb-2 text-sm sm:text-base">Gift Contents</h3>
+        <h3 className="font-semibold text-[#E98D3D] mb-2 text-sm sm:text-base">Gift Contents</h3>
         <div className="space-y-2">
           {giftContents.map((sp) => (
             <div key={sp.product.id} className="flex justify-between text-xs sm:text-sm">
@@ -72,7 +72,7 @@ export default function OrderSummary({
           <span className="whitespace-nowrap">TBD (calculated at checkout)</span>
         </div>
         <div className="border-t border-[#8B7355]/30 pt-3 mt-3">
-          <div className="flex justify-between font-bold text-base sm:text-lg text-[#5D4037]">
+          <div className="flex justify-between font-bold text-base sm:text-lg text-[#E98D3D]">
             <span>Total:</span>
             <span className="whitespace-nowrap">${pricing.total.toFixed(2)}</span>
           </div>

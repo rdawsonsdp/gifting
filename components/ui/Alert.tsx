@@ -10,7 +10,7 @@ export default function Alert({ children, variant = 'info', className = '' }: Al
   const variantStyles = {
     success: 'bg-[#4CAF50]/10 border-[#4CAF50] text-[#2E7D32]',
     error: 'bg-[#E53935]/10 border-[#E53935] text-[#C62828]',
-    info: 'bg-[#E6E6FA]/50 border-[#8B7355] text-[#5D4037]'
+    info: 'bg-[#E6E6FA]/50 border-[#8B7355] text-[#E98D3D]'
   };
 
   return (

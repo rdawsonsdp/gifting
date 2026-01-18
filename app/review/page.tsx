@@ -96,7 +96,7 @@ export default function ReviewPage() {
         <Badge variant={state.selectedTier.id as 'bronze' | 'silver' | 'gold' | 'platinum'} className="mb-3 sm:mb-4">
           {state.selectedTier.name} Tier
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#5D4037] mb-2 font-[var(--font-playfair)]">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#E98D3D] mb-2 font-[var(--font-playfair)]">
           Review Your Order
         </h1>
         <p className="text-sm sm:text-base text-[#333333]">
@@ -160,7 +160,7 @@ export default function ReviewPage() {
         title="Payment Processing"
       >
         <div className="space-y-3 sm:space-y-4">
-          <p className="text-base sm:text-lg font-semibold text-[#5D4037]">
+          <p className="text-base sm:text-lg font-semibold text-[#E98D3D]">
             Payment Processing Next
           </p>
           <p className="text-sm sm:text-base text-[#333333]">

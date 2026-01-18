@@ -23,7 +23,7 @@ function ConfirmationContent() {
     return (
       <div className="container mx-auto px-4 py-12">
         <Card>
-          <h1 className="text-2xl font-bold text-[#5D4037] mb-4 font-[var(--font-playfair)]">
+          <h1 className="text-2xl font-bold text-[#E98D3D] mb-4 font-[var(--font-playfair)]">
             No Order Found
           </h1>
           <p className="text-[#333333] mb-6">
@@ -48,7 +48,7 @@ function ConfirmationContent() {
       <div className="max-w-2xl mx-auto">
         <Card className="text-center mb-6 sm:mb-8">
           <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">✓</div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#5D4037] mb-2 font-[var(--font-playfair)]">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#E98D3D] mb-2 font-[var(--font-playfair)]">
             Order Confirmed!
           </h1>
           {orderId && (
@@ -59,7 +59,7 @@ function ConfirmationContent() {
         </Card>
 
         <Card className="mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+          <h2 className="text-lg sm:text-xl font-bold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
             Order Summary
           </h2>
           
@@ -71,7 +71,7 @@ function ConfirmationContent() {
             </div>
 
             <div>
-              <h3 className="font-semibold text-[#5D4037] mb-2 text-sm sm:text-base">Gift Contents</h3>
+              <h3 className="font-semibold text-[#E98D3D] mb-2 text-sm sm:text-base">Gift Contents</h3>
               <ul className="space-y-1 text-xs sm:text-sm">
                 {state.selectedProducts.map((sp) => (
                   <li key={sp.product.id} className="flex justify-between">
@@ -83,7 +83,7 @@ function ConfirmationContent() {
             </div>
 
             <div className="border-t border-[#8B7355]/30 pt-3 sm:pt-4">
-              <div className="flex justify-between font-semibold text-sm sm:text-base text-[#5D4037]">
+              <div className="flex justify-between font-semibold text-sm sm:text-base text-[#E98D3D]">
                 <span>Gift Total:</span>
                 <span className="whitespace-nowrap">${giftTotal.toFixed(2)}</span>
               </div>
@@ -96,7 +96,7 @@ function ConfirmationContent() {
         </Card>
 
         <Card className="mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
+          <h2 className="text-lg sm:text-xl font-bold text-[#E98D3D] mb-3 sm:mb-4 font-[var(--font-playfair)]">
             What's Next?
           </h2>
           <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-[#333333]">
@@ -127,7 +127,7 @@ function ConfirmationContent() {
           <p>Life is Sweeter with Brown Sugar Bakery</p>
           <p className="mt-2">
             Questions? Contact us at{' '}
-            <a href="tel:773-570-7676" className="text-[#5D4037] hover:underline">
+            <a href="tel:773-570-7676" className="text-[#E98D3D] hover:underline">
               773-570-7676
             </a>
           </p>
@@ -143,7 +143,7 @@ export default function ConfirmationPage() {
       <div className="container mx-auto px-4 py-12">
         <Card>
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5D4037] mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E98D3D] mx-auto mb-4"></div>
             <p className="text-[#333333]">Loading order confirmation...</p>
           </div>
         </Card>

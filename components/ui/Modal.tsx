@@ -29,14 +29,14 @@ export default function Modal({ isOpen, onClose, title, children, showCloseButto
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2
             id="modal-title"
-            className="text-xl sm:text-2xl font-bold text-[#5D4037] font-[var(--font-playfair)]"
+            className="text-xl sm:text-2xl font-bold text-[#E98D3D] font-[var(--font-playfair)]"
           >
             {title}
           </h2>
           {showCloseButton && (
             <button
               onClick={onClose}
-              className="text-[#5D4037] hover:text-[#4A3329] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="text-[#E98D3D] hover:text-[#D67A2E] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Close modal"
             >
               <svg

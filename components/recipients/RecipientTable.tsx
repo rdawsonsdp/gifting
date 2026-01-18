@@ -68,7 +68,7 @@ export default function RecipientTable({ recipients, onUpdate }: RecipientTableP
   return (
     <Card>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-2">
-        <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] font-[var(--font-playfair)]">
+        <h2 className="text-lg sm:text-xl font-bold text-[#E98D3D] font-[var(--font-playfair)]">
           Recipients ({recipients.length})
         </h2>
         <div className="text-xs sm:text-sm flex flex-wrap gap-2 sm:gap-4">
@@ -85,12 +85,12 @@ export default function RecipientTable({ recipients, onUpdate }: RecipientTableP
             <table className="w-full text-xs sm:text-sm min-w-[800px]">
               <thead>
                 <tr className="border-b border-[#8B7355]/30">
-                  <th className="text-left p-2 font-semibold text-[#5D4037]">Status</th>
-                  <th className="text-left p-2 font-semibold text-[#5D4037]">Name</th>
-                  <th className="text-left p-2 font-semibold text-[#5D4037] hidden sm:table-cell">Company</th>
-                  <th className="text-left p-2 font-semibold text-[#5D4037]">Address</th>
-                  <th className="text-left p-2 font-semibold text-[#5D4037]">City, State ZIP</th>
-                  <th className="text-left p-2 font-semibold text-[#5D4037]">Actions</th>
+                  <th className="text-left p-2 font-semibold text-[#E98D3D]">Status</th>
+                  <th className="text-left p-2 font-semibold text-[#E98D3D]">Name</th>
+                  <th className="text-left p-2 font-semibold text-[#E98D3D] hidden sm:table-cell">Company</th>
+                  <th className="text-left p-2 font-semibold text-[#E98D3D]">Address</th>
+                  <th className="text-left p-2 font-semibold text-[#E98D3D]">City, State ZIP</th>
+                  <th className="text-left p-2 font-semibold text-[#E98D3D]">Actions</th>
                 </tr>
               </thead>
               <tbody>

@@ -6,10 +6,10 @@ export default function NotFound() {
   return (
     <div className="container mx-auto px-4 py-12">
       <Card className="max-w-2xl mx-auto text-center">
-        <h1 className="text-4xl font-bold text-[#5D4037] mb-4 font-[var(--font-playfair)]">
+        <h1 className="text-4xl font-bold text-[#E98D3D] mb-4 font-[var(--font-playfair)]">
           404
         </h1>
-        <h2 className="text-2xl font-semibold text-[#5D4037] mb-4">
+        <h2 className="text-2xl font-semibold text-[#E98D3D] mb-4">
           Page Not Found
         </h2>
         <p className="text-[#333333] mb-8">

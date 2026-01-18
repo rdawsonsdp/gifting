@@ -10,9 +10,9 @@ export default function Badge({ children, variant = 'default', className = '' }:
   const variantStyles = {
     bronze: 'bg-[#CD7F32] text-white',
     silver: 'bg-gray-400 text-white',
-    gold: 'bg-[#D4AF37] text-[#5D4037]',
-    platinum: 'bg-[#E5E4E2] text-[#5D4037]',
-    default: 'bg-[#5D4037] text-white'
+    gold: 'bg-[#D4AF37] text-[#E98D3D]',
+    platinum: 'bg-[#E5E4E2] text-[#E98D3D]',
+    default: 'bg-[#E98D3D] text-white'
   };
 
   return (
