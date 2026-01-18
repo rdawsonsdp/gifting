@@ -7,10 +7,10 @@ interface CardProps {
 }
 
 export default function Card({ children, className = '', hover = true }: CardProps) {
-  const hoverStyles = hover ? 'hover:shadow-lg transition-shadow duration-200' : '';
+  const hoverStyles = hover ? 'hover:shadow-xl transition-all duration-300' : '';
   
   return (
-    <div className={`bg-[#FFF8E7] rounded-lg shadow-md p-4 sm:p-6 border border-[#8B7355]/20 ${hoverStyles} ${className}`}>
+    <div className={`glass-card rounded-xl sm:rounded-2xl shadow-md p-4 sm:p-6 border border-light-brown/20 ${hoverStyles} ${className}`}>
       {children}
     </div>
   );

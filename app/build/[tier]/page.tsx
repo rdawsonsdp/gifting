@@ -99,15 +99,18 @@ export default function BuildPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div className="mb-6 sm:mb-8">
-        <Badge variant={tier.id as 'bronze' | 'silver' | 'gold' | 'platinum'} className="mb-3 sm:mb-4">
+      <div className="mb-6 sm:mb-8 lg:mb-12 relative animate-fade-up">
+        {/* Background decorative blur */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-primary-brown/5 rounded-full blur-[80px] -z-10"></div>
+        
+        <Badge variant={tier.id as 'bronze' | 'silver' | 'gold' | 'platinum'} className="mb-3 sm:mb-4 animate-scale-in">
           {tier.name} Tier
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#5D4037] mb-2 font-[var(--font-playfair)]">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-brown mb-2 font-display">
           Build Your Gift
         </h1>
-        <p className="text-sm sm:text-base text-[#333333]">
-          Select products within your ${tier.minSpend} - ${tier.maxSpend} budget
+        <p className="text-sm sm:text-base text-charcoal/70">
+          Select products within your <span className="font-semibold text-primary-brown">${tier.minSpend} - ${tier.maxSpend}</span> budget
         </p>
       </div>
 
@@ -126,9 +129,19 @@ export default function BuildPage() {
             </Alert>
           )}
 
+          {/* Products Section Header */}
+          <div className="mt-6 sm:mt-8 mb-4 sm:mb-6 animate-fade-up">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-primary-brown mb-2">
+              Select Your Products
+            </h2>
+            <p className="text-sm sm:text-base text-charcoal/70">
+              Choose from our handcrafted selection to build your perfect gift
+            </p>
+          </div>
+
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
-              {[1, 2, 3, 4].map((i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <Card key={i} className="animate-pulse">
                   <div className="aspect-square bg-gray-300 rounded-lg mb-4"></div>
                   <div className="h-4 bg-gray-300 rounded mb-2"></div>
@@ -141,63 +154,77 @@ export default function BuildPage() {
               No products available for this tier. Please check back later.
             </Alert>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  currentQuantity={getProductQuantity(product.id)}
-                  onAdd={handleAddProduct}
-                  onRemove={handleRemoveProduct}
-                  disabled={isProductDisabled(product)}
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {products.map((product, index) => (
+                <div key={product.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <ProductCard
+                    product={product}
+                    currentQuantity={getProductQuantity(product.id)}
+                    onAdd={handleAddProduct}
+                    onRemove={handleRemoveProduct}
+                    disabled={isProductDisabled(product)}
+                  />
+                </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Selected Items Panel */}
+        {/* Selected Items Panel - E-commerce Cart Style */}
         <div className="lg:col-span-1 order-1 lg:order-2">
-          <Card className="sticky top-20 sm:top-24 lg:top-4 mb-6 lg:mb-0">
-            <h2 className="text-lg sm:text-xl font-bold text-[#5D4037] mb-3 sm:mb-4 font-[var(--font-playfair)]">
-              Your Gift
-            </h2>
+          <Card className="sticky top-20 sm:top-24 lg:top-4 mb-6 lg:mb-0 animate-scale-in delay-200">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-display font-bold text-primary-brown">
+                Your Gift
+              </h2>
+              {state.selectedProducts.length > 0 && (
+                <span className="px-2 py-1 bg-accent-gold/20 text-primary-brown rounded-full text-xs font-bold">
+                  {state.selectedProducts.reduce((sum, sp) => sum + sp.quantity, 0)} items
+                </span>
+              )}
+            </div>
 
             {state.selectedProducts.length === 0 ? (
-              <p className="text-xs sm:text-sm text-[#8B7355]">
-                Add products to build your gift
-              </p>
+              <div className="text-center py-8">
+                <div className="text-4xl mb-3">🎁</div>
+                <p className="text-sm text-light-brown">
+                  Add products to build your gift
+                </p>
+              </div>
             ) : (
               <>
                 <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
                   {state.selectedProducts.map((sp) => (
-                    <div key={sp.product.id} className="flex justify-between items-start border-b border-[#8B7355]/20 pb-2 sm:pb-3">
+                    <div key={sp.product.id} className="flex justify-between items-start border-b border-light-brown/20 pb-2 sm:pb-3 hover:bg-cream/50 rounded px-2 -mx-2 transition-colors">
                       <div className="flex-1 min-w-0 pr-2">
-                        <p className="font-semibold text-[#5D4037] text-xs sm:text-sm truncate">
+                        <p className="font-display font-semibold text-primary-brown text-xs sm:text-sm truncate">
                           {sp.product.title}
                         </p>
-                        <p className="text-xs text-[#8B7355]">
+                        <p className="text-xs text-light-brown">
                           Qty: {sp.quantity} × ${sp.product.price.toFixed(2)}
                         </p>
                       </div>
-                      <p className="font-semibold text-[#5D4037] text-sm sm:text-base whitespace-nowrap">
+                      <p className="font-display font-bold text-primary-brown text-sm sm:text-base whitespace-nowrap">
                         ${(sp.product.price * sp.quantity).toFixed(2)}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-[#8B7355]/30 pt-3 sm:pt-4 mb-3 sm:mb-4">
-                  <div className="flex justify-between text-base sm:text-lg font-bold text-[#5D4037]">
+                <div className="border-t border-light-brown/30 pt-3 sm:pt-4 mb-3 sm:mb-4">
+                  <div className="flex justify-between text-base sm:text-lg font-display font-bold text-primary-brown">
                     <span>Total:</span>
-                    <span>${currentTotal.toFixed(2)}</span>
+                    <span className="text-xl">${currentTotal.toFixed(2)}</span>
                   </div>
+                  <p className="text-xs text-light-brown mt-1">
+                    Budget: ${tier.minSpend} - ${tier.maxSpend}
+                  </p>
                 </div>
 
                 <Button
                   onClick={handleContinue}
                   disabled={!canProceedToRecipients()}
-                  className="w-full"
+                  className="w-full btn-primary"
                 >
                   Continue to Recipients
                 </Button>
