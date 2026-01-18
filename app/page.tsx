@@ -3,6 +3,7 @@
 import { TIERS } from '@/lib/tiers';
 import TierCard from '@/components/gift-builder/TierCard';
 import HeroCarousel from '@/components/layout/HeroCarousel';
+import ProductCarousel from '@/components/gift-builder/ProductCarousel';
 
 // Helper function to extract Vimeo video ID from URL
 function getVimeoVideoId(url: string): string {
@@ -102,14 +103,11 @@ export default function Home() {
           <h3 className="font-display font-semibold text-primary-brown mb-2 text-base sm:text-lg">Bulk Gifting</h3>
           <p className="text-sm text-charcoal/70">Send gifts to multiple addresses across the country</p>
         </div>
-        <div className="glass-card rounded-2xl p-6 text-center hover-lift animate-scale-in delay-400">
+        <a href="/contact" className="glass-card rounded-2xl p-6 text-center hover-lift animate-scale-in delay-400 block cursor-pointer">
           <div className="text-3xl sm:text-4xl mb-3 animate-float" style={{ animationDelay: '3s' }}>📧</div>
           <h3 className="font-display font-semibold text-primary-brown mb-2 text-base sm:text-lg">Contact Us</h3>
-          <p className="text-sm text-charcoal/70 mb-3">Have questions? Get in touch with our corporate gifting team</p>
-          <a href="/contact" className="inline-block px-4 py-2 bg-primary-brown text-white rounded-lg text-sm font-semibold hover:bg-[#4A3329] transition-colors">
-            Contact Us
-          </a>
-        </div>
+          <p className="text-sm text-charcoal/70">Have questions? Get in touch with our corporate gifting team</p>
+        </a>
       </div>
 
       {/* Tier Selection with E-commerce Grid */}
@@ -133,6 +131,9 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* Product Carousel */}
+      <ProductCarousel autoScroll={true} scrollInterval={4000} />
 
       {/* Call to Action with Enhanced Styling */}
       <div className="relative text-center mt-8 sm:mt-12 lg:mt-16">
