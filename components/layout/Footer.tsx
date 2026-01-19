@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -33,11 +34,18 @@ export default function Footer() {
             <div className="flex flex-col space-y-2">
               <Link 
                 href="https://www.brownsugarbakerychicago.com" 
-                className="text-sm hover:text-[#D4AF37] transition-colors"
+                className="flex items-center hover:opacity-80 transition-opacity min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visit Main Site"
               >
-                Visit Main Site
+                <Image
+                  src="/images/bsb-horizontal-logo-full-color-rgb_600x.svg"
+                  alt="Brown Sugar Bakery"
+                  width={150}
+                  height={50}
+                  className="h-8 sm:h-10 w-auto object-contain"
+                />
               </Link>
               <div className="flex space-x-4 mt-2">
                 <a 

@@ -1,9 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import Papa from 'papaparse';
 import { Recipient } from '@/lib/types';
-import { validateRecipient } from '@/lib/csv-utils';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
@@ -17,46 +15,49 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const processFile = useCallback((file: File) => {
+  const isValidFileType = (fileName: string): boolean => {
+    const lowerName = fileName.toLowerCase();
+    return lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls');
+  };
+
+  const processFile = useCallback(async (file: File) => {
     setUploading(true);
-    
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        try {
-          const validatedRecipients: Recipient[] = [];
-          const errors: string[] = [];
+    onError(''); // Clear previous errors
 
-          results.data.forEach((row: any, index: number) => {
-            const { recipient, errors: rowErrors } = validateRecipient(row);
-            if (recipient) {
-              validatedRecipients.push(recipient);
-            } else {
-              errors.push(`Row ${index + 2}: ${rowErrors.join(', ')}`);
-            }
-          });
+    if (!isValidFileType(file.name)) {
+      onError('Please upload a CSV, XLS, or XLSX file.');
+      setUploading(false);
+      return;
+    }
 
-          if (validatedRecipients.length === 0) {
-            onError('No valid recipients found in CSV. Please check the format.');
-          } else {
-            onUpload(validatedRecipients);
-            if (errors.length > 0) {
-              console.warn('Some rows had errors:', errors);
-            }
-          }
-        } catch (error) {
-          onError('Failed to parse CSV file. Please ensure it\'s a valid CSV format.');
-          console.error(error);
-        } finally {
-          setUploading(false);
-        }
-      },
-      error: (error) => {
-        onError(`CSV parsing error: ${error.message}`);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/parse-recipients', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        onError(data.error || 'Failed to parse file');
         setUploading(false);
-      },
-    });
+        return;
+      }
+
+      if (data.recipients && data.recipients.length > 0) {
+        onUpload(data.recipients);
+      } else {
+        onError('No valid recipients found in file. Please check the format.');
+      }
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Failed to process file');
+      console.error('Error processing file:', error);
+    } finally {
+      setUploading(false);
+    }
   }, [onUpload, onError]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -64,10 +65,10 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && file.type === 'text/csv' || file.name.endsWith('.csv')) {
+    if (file && isValidFileType(file.name)) {
       processFile(file);
     } else {
-      onError('Please upload a CSV file.');
+      onError('Please upload a CSV, XLS, or XLSX file.');
     }
   }, [processFile, onError]);
 
@@ -107,7 +108,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
         {uploading ? (
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E98D3D] mb-2"></div>
-            <p className="text-sm sm:text-base text-[#333333]">Processing CSV...</p>
+            <p className="text-sm sm:text-base text-[#333333]">Processing file...</p>
           </div>
         ) : (
           <>
@@ -125,7 +126,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
               />
             </svg>
             <p className="text-sm sm:text-base text-[#333333] mb-2">
-              Drag and drop your CSV file here, or
+              Drag and drop your recipient list file here, or
             </p>
             <label className="cursor-pointer">
               <span className="text-[#E98D3D] font-semibold hover:text-[#D67A2E] text-sm sm:text-base">
@@ -133,13 +134,13 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
               </span>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileSelect}
                 className="hidden"
               />
             </label>
             <p className="text-xs sm:text-sm text-[#8B7355] mt-3 sm:mt-4">
-              CSV format required
+              CSV, XLS, or XLSX format supported
             </p>
           </>
         )}
@@ -153,6 +154,9 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
         >
           Download CSV Template
         </Button>
+        <p className="text-xs text-[#8B7355] mt-2 text-center">
+          Excel files (.xlsx, .xls) should use the same column format
+        </p>
       </div>
 
       <Alert variant="info" className="mt-3 sm:mt-4">

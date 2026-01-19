@@ -24,14 +24,23 @@ export default function ProductCarousel({
         const response = await fetch('/api/products');
         if (response.ok) {
           const data = await response.json();
-          // Filter to show a good variety - prioritize products with images
-          const productsWithImages = data.products
-            .filter((p: Product) => p.image && p.image.trim() !== '')
-            .slice(0, 12); // Show up to 12 products
-          setProducts(productsWithImages);
+          if (data.products && Array.isArray(data.products)) {
+            // Filter to show a good variety - prioritize products with images
+            const productsWithImages = data.products
+              .filter((p: Product) => p.image && p.image.trim() !== '')
+              .slice(0, 12); // Show up to 12 products
+            setProducts(productsWithImages);
+          } else {
+            console.error('Invalid products data format:', data);
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to fetch products from Shopify:', errorData.message || errorData.error);
+          // Set empty products array so the "no products" message shows
+          setProducts([]);
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching products from Shopify:', error);
       } finally {
         setLoading(false);
       }
@@ -83,7 +92,29 @@ export default function ProductCarousel({
   }
 
   if (products.length === 0) {
-    return null;
+    // Don't hide the carousel - show a message instead
+    return (
+      <div className="py-8 sm:py-12 lg:py-16">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center">
+            <p className="text-sm font-semibold text-primary-brown uppercase tracking-wider mb-3">
+              Our Products
+            </p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-primary-brown mb-3 sm:mb-4">
+              Handcrafted Corporate Gifts
+            </h2>
+            <div className="glass-card rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto">
+              <p className="text-charcoal/70 mb-2">
+                Products are loading from Shopify...
+              </p>
+              <p className="text-sm text-charcoal/50">
+                If products don't appear, please check your Shopify configuration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

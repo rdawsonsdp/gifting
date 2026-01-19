@@ -1,0 +1,152 @@
+===========================================
+VERCEL ENVIRONMENT VARIABLES CONFIGURATION
+Brown Sugar Bakery - Corporate Gifting App
+===========================================
+
+Copy and paste these environment variables into your Vercel project settings:
+
+===========================================
+SHOPIFY CONFIGURATION (REQUIRED)
+===========================================
+
+SHOPIFY_STORE_DOMAIN=brown-sugar-bakery-chicago.myshopify.com
+Description: Your Shopify store domain (without https://)
+Example: brown-sugar-bakery-chicago.myshopify.com
+
+SHOPIFY_ADMIN_API_ACCESS_TOKEN=shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Description: Shopify Admin API access token (starts with shpat_)
+Note: Generate this from Shopify Admin > Apps > Development > Your App > API credentials
+Required Scopes: read_products, write_draft_orders, write_files
+
+SHOPIFY_COLLECTION_HANDLE=corporate-gifting-collection
+Description: The handle (URL-friendly name) of your Shopify collection containing gift products
+Example: corporate-gifting-collection
+Note: Find this in Shopify Admin > Products > Collections > [Your Collection] > URL handle
+
+===========================================
+APPLICATION URL (REQUIRED)
+===========================================
+
+NEXT_PUBLIC_BASE_URL=https://your-app-name.vercel.app
+Description: Your Vercel deployment URL (used for generating Excel file download links)
+Example: https://gifting-app.vercel.app
+Note: Update this after your first deployment with the actual Vercel URL
+
+===========================================
+EMAIL CONFIGURATION (REQUIRED FOR ORDER CONFIRMATIONS)
+===========================================
+
+SMTP_HOST=smtp.gmail.com
+Description: SMTP server hostname for sending emails
+Example: smtp.gmail.com (for Gmail)
+Other options: smtp.mail.yahoo.com (Yahoo), smtp.outlook.com (Outlook), or your custom SMTP server
+
+SMTP_PORT=587
+Description: SMTP server port
+Common values: 587 (TLS), 465 (SSL), 25 (unsecured - not recommended)
+Note: Use 587 for Gmail with TLS, 465 for SSL
+
+SMTP_SECURE=false
+Description: Whether to use SSL/TLS encryption
+Values: true (for port 465) or false (for port 587 with STARTTLS)
+Note: Set to "true" for SSL (port 465), "false" for TLS (port 587)
+
+SMTP_USER=your-email@gmail.com
+Description: SMTP authentication username (usually your email address)
+Example: noreply@brownsugarbakerychicago.com
+Note: For Gmail, use your full email address
+
+SMTP_PASS=your-app-specific-password
+Description: SMTP authentication password
+Note: For Gmail, you MUST use an "App Password" (not your regular password)
+How to get Gmail App Password:
+  1. Go to Google Account settings
+  2. Security > 2-Step Verification (must be enabled)
+  3. App passwords > Generate app password
+  4. Use the 16-character password generated
+
+FROM_EMAIL=noreply@brownsugarbakerychicago.com
+Description: Email address that will appear as the sender
+Example: noreply@brownsugarbakerychicago.com
+Note: Should match your SMTP_USER or be a verified sender address
+
+FROM_NAME=Brown Sugar Bakery
+Description: Display name for the sender
+Example: Brown Sugar Bakery
+Note: This appears as "Brown Sugar Bakery <noreply@...>" in recipient's inbox
+
+===========================================
+QUICK COPY-PASTE FOR VERCEL
+===========================================
+
+Copy the following block and paste into Vercel Environment Variables:
+
+SHOPIFY_STORE_DOMAIN=brown-sugar-bakery-chicago.myshopify.com
+SHOPIFY_ADMIN_API_ACCESS_TOKEN=shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SHOPIFY_COLLECTION_HANDLE=corporate-gifting-collection
+NEXT_PUBLIC_BASE_URL=https://your-app-name.vercel.app
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-specific-password
+FROM_EMAIL=noreply@brownsugarbakerychicago.com
+FROM_NAME=Brown Sugar Bakery
+
+===========================================
+SETUP INSTRUCTIONS
+===========================================
+
+1. Go to your Vercel project dashboard
+2. Navigate to: Settings > Environment Variables
+3. Add each variable above with its corresponding value
+4. Select the appropriate environments (Production, Preview, Development)
+5. After adding all variables, redeploy your application
+
+===========================================
+VERIFICATION CHECKLIST
+===========================================
+
+After deployment, verify:
+[ ] Products are loading from Shopify collection
+[ ] Draft orders are being created successfully
+[ ] Excel files are being generated and accessible
+[ ] Order confirmation emails are being sent
+[ ] Excel file URLs in order notes are working
+
+===========================================
+TROUBLESHOOTING
+===========================================
+
+If products don't load:
+- Verify SHOPIFY_STORE_DOMAIN is correct (no https://, no trailing slash)
+- Verify SHOPIFY_ADMIN_API_ACCESS_TOKEN is valid and has read_products scope
+- Verify SHOPIFY_COLLECTION_HANDLE matches your collection's handle exactly
+
+If orders fail to create:
+- Verify SHOPIFY_ADMIN_API_ACCESS_TOKEN has write_draft_orders scope
+- Check Shopify Admin > Apps > Your App > API scopes
+
+If emails don't send:
+- Verify SMTP credentials are correct
+- For Gmail: Use App Password, not regular password
+- Check SMTP_PORT and SMTP_SECURE match your provider's requirements
+- Verify FROM_EMAIL is a valid sender address
+
+If Excel file links don't work:
+- Verify NEXT_PUBLIC_BASE_URL matches your Vercel deployment URL
+- Check that the /api/excel/[filename] route is accessible
+- Ensure excel-files directory is writable (Vercel handles this automatically)
+
+===========================================
+NOTES
+===========================================
+
+- All environment variables are case-sensitive
+- Do not include quotes around values in Vercel
+- NEXT_PUBLIC_* variables are exposed to the browser (safe for public URLs)
+- Other variables are server-side only (secure)
+- Update NEXT_PUBLIC_BASE_URL after your first deployment
+- Keep SHOPIFY_ADMIN_API_ACCESS_TOKEN secure and never commit to git
+
+===========================================

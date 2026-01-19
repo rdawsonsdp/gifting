@@ -111,7 +111,7 @@ export default function RecipientsPage() {
           Add Recipients
         </h1>
         <p className="text-sm sm:text-base text-[#333333]">
-          Upload a CSV file with your recipient list
+          Upload a CSV, XLS, or XLSX file with your recipient list
         </p>
       </div>
 

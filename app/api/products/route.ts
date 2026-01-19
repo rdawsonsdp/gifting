@@ -1,62 +1,35 @@
 import { NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { Product } from '@/lib/types';
 
-// Load static products from JSON file
-function loadStaticProducts(): Product[] {
-  try {
-    const filePath = join(process.cwd(), 'lib', 'products.json');
-    const fileContents = readFileSync(filePath, 'utf-8');
-    const data = JSON.parse(fileContents);
-    return data.products || [];
-  } catch (error) {
-    console.error('Error loading static products:', error);
-    return [];
-  }
-}
-
 export async function GET() {
-  // Using static products from JSON file
-  // Shopify product fetching is commented out for now
-  
-  // TODO: Uncomment below to enable Shopify product fetching
-  // try {
-  //   // Try to fetch from Shopify first (if configured)
-  //   const { fetchGiftProducts } = await import('@/lib/shopify');
-  //   const products = await fetchGiftProducts();
-  //   return NextResponse.json({ products });
-  // } catch (error) {
-  //   console.log('Shopify not configured, using static products');
-  // }
-  
-  // Use static products from JSON file
-  const products = loadStaticProducts();
-  
-  if (products.length === 0) {
-    // Fallback to minimal mock products if JSON file fails
-    const mockProducts: Product[] = [
-      {
-        id: '1',
-        title: 'Assorted Chocolates',
-        description: 'A delightful mix of handcrafted chocolates',
-        price: 12.99,
-        image: '',
-        availableForTiers: [],
-        inventory: 100,
+  try {
+    // Fetch products from Shopify Candy Collection
+    const { fetchGiftProducts } = await import('@/lib/shopify');
+    const products = await fetchGiftProducts();
+    
+    if (products.length === 0) {
+      return NextResponse.json(
+        { 
+          error: 'No products found in Candy Collection',
+          message: 'Please ensure products are added to the Candy Collection in Shopify'
+        },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({ products });
+  } catch (error) {
+    console.error('Error fetching products from Shopify:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch products from Shopify',
+        message: errorMessage,
+        details: 'Please verify your Shopify configuration and that the Candy Collection exists'
       },
-      {
-        id: '2',
-        title: 'Caramel Collection',
-        description: 'Rich, creamy caramels in various flavors',
-        price: 15.99,
-        image: '',
-        availableForTiers: [],
-        inventory: 50,
-      },
-    ];
-    return NextResponse.json({ products: mockProducts });
+      { status: 500 }
+    );
   }
-  
-  return NextResponse.json({ products });
 }

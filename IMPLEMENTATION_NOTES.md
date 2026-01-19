@@ -3,7 +3,7 @@
 ## Product Carousel - Shopify Collection Integration
 
 ### Current Implementation
-The product carousel (`components/gift-builder/ProductCarousel.tsx`) currently fetches products from the `/api/products` endpoint, which uses static product data from `lib/products.json`.
+The product carousel (`components/gift-builder/ProductCarousel.tsx`) fetches products from the `/api/products` endpoint, which dynamically pulls products from Shopify's "Candy Collection" via the Admin API. All products are fetched in real-time - no static product data is used.
 
 ### Future Enhancement Required
 

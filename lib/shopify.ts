@@ -1,4 +1,5 @@
 import { Product, SelectedProduct, Recipient, BuyerInfo } from './types';
+import FormData from 'form-data';
 
 const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
 const SHOPIFY_ADMIN_API_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
@@ -31,7 +32,10 @@ async function shopifyRequest<T>(query: string, variables?: Record<string, any>)
   const result: GraphQLResponse<T> = await response.json();
 
   if (result.errors) {
-    throw new Error(result.errors.map(e => e.message).join(', '));
+    const errorMessages = Array.isArray(result.errors)
+      ? result.errors.map((e: any) => e.message || String(e)).join(', ')
+      : String(result.errors);
+    throw new Error(errorMessages);
   }
 
   if (!result.data) {
@@ -41,31 +45,37 @@ async function shopifyRequest<T>(query: string, variables?: Record<string, any>)
   return result.data;
 }
 
-// Commented out - using static products for now
-// TODO: Uncomment to enable Shopify product fetching
-/*
+// Fetch products from the "Corporate Gifting Collection" collection
 export async function fetchGiftProducts(): Promise<Product[]> {
+  // First, get the collection by handle (URL-friendly name)
+  // The collection handle is typically "corporate-gifting-collection" or "corporate-gifting" (lowercase, hyphens instead of spaces)
+  const collectionHandle = process.env.SHOPIFY_COLLECTION_HANDLE || 'corporate-gifting-collection';
+  
   const query = `
-    query {
-      products(first: 50, query: "tag:corporate-gift") {
-        edges {
-          node {
-            id
-            title
-            description
-            featuredImage {
-              url
-            }
-            variants(first: 1) {
-              edges {
-                node {
-                  id
-                  price
-                  inventoryQuantity
+    query getCollectionProducts($handle: String!) {
+      collectionByHandle(handle: $handle) {
+        id
+        title
+        products(first: 50) {
+          edges {
+            node {
+              id
+              title
+              description
+              featuredImage {
+                url
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price
+                    inventoryQuantity
+                  }
                 }
               }
+              tags
             }
-            tags
           }
         }
       }
@@ -74,29 +84,42 @@ export async function fetchGiftProducts(): Promise<Product[]> {
 
   try {
     const data = await shopifyRequest<{
-      products: {
-        edges: Array<{
-          node: {
-            id: string;
-            title: string;
-            description: string;
-            featuredImage: { url: string } | null;
-            variants: {
-              edges: Array<{
-                node: {
-                  id: string;
-                  price: string;
-                  inventoryQuantity: number;
-                };
-              }>;
+      collectionByHandle: {
+        id: string;
+        title: string;
+        products: {
+          edges: Array<{
+            node: {
+              id: string;
+              title: string;
+              description: string;
+              featuredImage: { url: string } | null;
+              variants: {
+                edges: Array<{
+                  node: {
+                    id: string;
+                    price: string;
+                    inventoryQuantity: number;
+                  };
+                }>;
+              };
+              tags: string[];
             };
-            tags: string[];
-          };
-        }>;
-      };
-    }>(query);
+          }>;
+        };
+      } | null;
+    }>(query, { handle: collectionHandle });
 
-    return data.products.edges.map(({ node }) => {
+    if (!data.collectionByHandle) {
+      throw new Error(`Collection "${collectionHandle}" not found. Please check the collection handle in your Shopify store.`);
+    }
+
+    if (!data.collectionByHandle.products.edges.length) {
+      console.warn(`Collection "${collectionHandle}" exists but has no products.`);
+      return [];
+    }
+
+    return data.collectionByHandle.products.edges.map(({ node }) => {
       const variant = node.variants.edges[0]?.node;
       return {
         id: node.id.split('/').pop() || '',
@@ -110,60 +133,75 @@ export async function fetchGiftProducts(): Promise<Product[]> {
       };
     });
   } catch (error) {
-    console.error('Error fetching products from Shopify:', error);
+    console.error('Error fetching products from Shopify collection:', error);
     throw error;
   }
 }
-*/
 
 export async function createDraftOrder(
   lineItems: Array<{ variantId: string; quantity: number }>,
   fulfillmentFee: number,
   recipientCount: number,
   buyerInfo: BuyerInfo,
-  recipientData: Recipient[]
-): Promise<{ draftOrderId: string; invoiceUrl: string }> {
+  recipientData: Recipient[],
+  excelFileUrl?: string
+): Promise<{ draftOrderId: string; draftOrderNumber: string; invoiceUrl: string }> {
   // Create line items for products
   const productLineItems = lineItems.map(item => ({
     variantId: `gid://shopify/ProductVariant/${item.variantId}`,
     quantity: item.quantity * recipientCount, // Multiply by recipient count
   }));
 
-  // Add fulfillment fee as custom line item
-  const customLineItems = [
+  // Add fulfillment fee as custom line item (using DraftOrderLineItemInput)
+  // Note: For MVP, we'll add fulfillment fee to the note and handle pricing manually
+  // Custom line items can be added later if needed via Shopify admin
+  const customLineItems: Array<{
+    title: string;
+    quantity: number;
+    originalUnitPrice: string;
+  }> = [
     {
       title: `Fulfillment Fee (${recipientCount} recipients × $${fulfillmentFee.toFixed(2)})`,
       quantity: 1,
-      originalUnitPrice: fulfillmentFee * recipientCount,
+      originalUnitPrice: (fulfillmentFee * recipientCount).toFixed(2),
     },
   ];
 
-  // Format recipient data for order note
-  const recipientNote = recipientData
-    .map((r, i) => {
-      return `Recipient ${i + 1}:
-${r.firstName} ${r.lastName}
-${r.company ? `${r.company}\n` : ''}${r.address1}
-${r.address2 ? `${r.address2}\n` : ''}${r.city}, ${r.state} ${r.zip}
-${r.giftMessage ? `Message: ${r.giftMessage}` : ''}`;
-    })
-    .join('\n\n---\n\n');
-
+  const fulfillmentTotal = fulfillmentFee * recipientCount;
+  
+  // Format delivery date for display
+  const deliveryDateFormatted = buyerInfo.deliveryDate 
+    ? new Date(buyerInfo.deliveryDate).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })
+    : 'Not specified';
+  
+  // Note: Recipient details are in the Excel file, not in the note
+  // The Excel file URL will be appended after the file is created
   const note = `Corporate Gifting Order
 
 Buyer: ${buyerInfo.name}
 Company: ${buyerInfo.company}
 Email: ${buyerInfo.email}
 Phone: ${buyerInfo.phone}
+Delivery Date: ${deliveryDateFormatted}
+${buyerInfo.notes ? `\nOrder Notes:\n${buyerInfo.notes}` : ''}
 
-Recipients (${recipientCount}):
-${recipientNote}`;
+Order Details:
+- Total Recipients: ${recipientCount}
+- Fulfillment Fee: $${fulfillmentFee.toFixed(2)} per recipient
+- Total Fulfillment Fee: $${fulfillmentTotal.toFixed(2)}
+
+Note: Complete recipient list is available in the Excel spreadsheet (link will be added below).`;
 
   const mutation = `
     mutation draftOrderCreate($input: DraftOrderInput!) {
       draftOrderCreate(input: $input) {
         draftOrder {
           id
+          name
           invoiceUrl
         }
         userErrors {
@@ -174,7 +212,26 @@ ${recipientNote}`;
     }
   `;
 
-  const variables = {
+  const variables: {
+    input: {
+      lineItems: Array<{ variantId: string; quantity: number }>;
+      customAttributes: Array<{ key: string; value: string }>;
+      note: string;
+      email: string;
+      tags: string[];
+      shippingAddress: {
+        firstName: string;
+        lastName: string;
+        company: string;
+        phone: string;
+      };
+      customLineItems?: Array<{
+        title: string;
+        quantity: number;
+        originalUnitPrice: string;
+      }>;
+    };
+  } = {
     input: {
       lineItems: productLineItems,
       customAttributes: [
@@ -186,16 +243,32 @@ ${recipientNote}`;
           key: 'order_type',
           value: 'corporate_gifting',
         },
+        {
+          key: 'fulfillment_fee',
+          value: fulfillmentTotal.toFixed(2),
+        },
+        {
+          key: 'delivery_date',
+          value: buyerInfo.deliveryDate || '',
+        },
+        ...(excelFileUrl ? [
+          {
+            key: 'excel_file_url',
+            value: excelFileUrl,
+          },
+        ] : []),
       ],
       note,
       email: buyerInfo.email,
+      tags: ['Corporate Gifting'],
       shippingAddress: {
         firstName: buyerInfo.name.split(' ')[0] || buyerInfo.name,
         lastName: buyerInfo.name.split(' ').slice(1).join(' ') || '',
         company: buyerInfo.company,
         phone: buyerInfo.phone,
       },
-      customLineItems,
+      // Note: customLineItems removed for MVP - fulfillment fee added to note and customAttributes
+      // Staff will manually add fulfillment fee as line item in Shopify admin
     },
   };
 
@@ -204,6 +277,7 @@ ${recipientNote}`;
       draftOrderCreate: {
         draftOrder: {
           id: string;
+          name: string;
           invoiceUrl: string;
         } | null;
         userErrors: Array<{ field: string[]; message: string }>;
@@ -221,13 +295,268 @@ ${recipientNote}`;
     }
 
     const draftOrderId = data.draftOrderCreate.draftOrder.id.split('/').pop() || '';
+    const draftOrderNumber = data.draftOrderCreate.draftOrder.name || draftOrderId;
 
     return {
       draftOrderId,
+      draftOrderNumber,
       invoiceUrl: data.draftOrderCreate.draftOrder.invoiceUrl,
     };
   } catch (error) {
     console.error('Error creating draft order:', error);
     throw error;
   }
+}
+
+/**
+ * Update a draft order with additional custom attributes
+ */
+export async function updateDraftOrderCustomAttributes(
+  draftOrderId: string,
+  customAttributes: Array<{ key: string; value: string }>
+): Promise<void> {
+  const mutation = `
+    mutation draftOrderUpdate($id: ID!, $input: DraftOrderInput!) {
+      draftOrderUpdate(id: $id, input: $input) {
+        draftOrder {
+          id
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    id: `gid://shopify/DraftOrder/${draftOrderId}`,
+    input: {
+      customAttributes,
+    },
+  };
+
+  try {
+    const data = await shopifyRequest<{
+      draftOrderUpdate: {
+        draftOrder: { id: string } | null;
+        userErrors: Array<{ field: string[]; message: string }>;
+      };
+    }>(mutation, variables);
+
+    if (data.draftOrderUpdate.userErrors.length > 0) {
+      throw new Error(
+        data.draftOrderUpdate.userErrors.map(e => e.message).join(', ')
+      );
+    }
+  } catch (error) {
+    console.error('Error updating draft order:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update draft order note with Excel file URL
+ */
+export async function updateDraftOrderNote(
+  draftOrderId: string,
+  note: string
+): Promise<void> {
+  const mutation = `
+    mutation draftOrderUpdate($id: ID!, $input: DraftOrderInput!) {
+      draftOrderUpdate(id: $id, input: $input) {
+        draftOrder {
+          id
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  // Handle both GID format and plain ID format
+  const orderId = draftOrderId.startsWith('gid://') 
+    ? draftOrderId 
+    : `gid://shopify/DraftOrder/${draftOrderId}`;
+
+  const variables = {
+    id: orderId,
+    input: {
+      note,
+    },
+  };
+
+  try {
+    const data = await shopifyRequest<{
+      draftOrderUpdate: {
+        draftOrder: { id: string } | null;
+        userErrors: Array<{ field: string[]; message: string }>;
+      };
+    }>(mutation, variables);
+
+    if (data.draftOrderUpdate.userErrors.length > 0) {
+      throw new Error(
+        data.draftOrderUpdate.userErrors.map(e => e.message).join(', ')
+      );
+    }
+  } catch (error) {
+    console.error('Error updating draft order note:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch current draft order note
+ */
+async function getDraftOrderNote(draftOrderId: string): Promise<string> {
+  const query = `
+    query getDraftOrder($id: ID!) {
+      draftOrder(id: $id) {
+        id
+        note
+      }
+    }
+  `;
+
+  // Handle both GID format and plain ID format
+  const orderId = draftOrderId.startsWith('gid://') 
+    ? draftOrderId 
+    : `gid://shopify/DraftOrder/${draftOrderId}`;
+
+  const variables = {
+    id: orderId,
+  };
+
+  try {
+    const data = await shopifyRequest<{
+      draftOrder: {
+        id: string;
+        note: string | null;
+      } | null;
+    }>(query, variables);
+
+    if (!data.draftOrder) {
+      throw new Error('Draft order not found');
+    }
+
+    return data.draftOrder.note || '';
+  } catch (error) {
+    console.error('Error fetching draft order note:', error);
+    throw error;
+  }
+}
+
+/**
+ * Append Excel URL to draft order note
+ */
+export async function appendExcelUrlToDraftOrderNote(
+  draftOrderId: string,
+  excelFileUrl: string,
+  recipientCount?: number
+): Promise<void> {
+  try {
+    console.log('Appending Excel URL to draft order note:', { draftOrderId, excelFileUrl });
+    
+    // Get current note
+    const currentNote = await getDraftOrderNote(draftOrderId);
+    console.log('Current note length:', currentNote.length);
+    
+    // Check if URL is already in the note
+    if (currentNote.includes(excelFileUrl)) {
+      console.log('Excel URL already present in draft order note');
+      return;
+    }
+
+    // Append Excel URL as a clear, clickable link
+    // Format it prominently so it's easy to find and click
+    const recipientCountText = recipientCount !== undefined 
+      ? `\nTotal Recipients: ${recipientCount}`
+      : '';
+    
+    const excelUrlText = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📎 EXCEL RECIPIENT LIST:${recipientCountText}
+${excelFileUrl}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    // Append the URL to the note
+    const updatedNote = currentNote + excelUrlText;
+    console.log('Updated note length:', updatedNote.length);
+
+    // Update draft order with new note
+    await updateDraftOrderNote(draftOrderId, updatedNote);
+    console.log('✅ Excel URL appended to draft order note successfully');
+  } catch (error) {
+    console.error('❌ Error appending Excel URL to draft order note:', error);
+    // Don't throw - allow order to succeed even if note update fails
+    // The URL is still in custom attributes
+  }
+}
+
+/**
+ * Upload a file to Shopify Files API
+ * Returns the public URL of the uploaded file, or throws error for fallback handling
+ */
+export async function uploadFileToShopify(
+  fileBuffer: Buffer,
+  filename: string,
+  contentType: string = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+): Promise<string> {
+  if (!SHOPIFY_STORE_DOMAIN || !SHOPIFY_ADMIN_API_ACCESS_TOKEN) {
+    throw new Error('Shopify credentials not configured');
+  }
+
+  // Try REST API first (simpler)
+  try {
+    const base64Content = fileBuffer.toString('base64');
+    const formData = new FormData();
+    formData.append('file[attachment]', base64Content);
+    formData.append('file[filename]', filename);
+    formData.append('file[content_type]', contentType);
+
+    const response = await fetch(
+      `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/files.json`,
+      {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_ACCESS_TOKEN,
+          ...formData.getHeaders(),
+        },
+        body: formData as any,
+      }
+    );
+
+    const responseText = await response.text();
+    
+    if (response.ok) {
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}`);
+      }
+      
+      if (data.file && data.file.url) {
+        return data.file.url;
+      }
+
+      if (data.errors) {
+        throw new Error(`Shopify API errors: ${JSON.stringify(data.errors)}`);
+      }
+    }
+    
+    // If REST API fails, throw error to trigger fallback
+    throw new Error(`REST API upload failed: ${response.status}`);
+  } catch (error) {
+    console.error('Shopify Files API upload failed, will use base64 fallback:', error);
+    throw error; // Re-throw to trigger fallback in calling code
+  }
+}
+
+/**
+ * Get base64 representation of file for fallback storage
+ */
+export function getFileBase64(fileBuffer: Buffer): string {
+  return fileBuffer.toString('base64');
 }

@@ -45,10 +45,10 @@ export default function BuildPage() {
         );
         setProducts(filteredProducts);
       } catch (err) {
-        setError('Unable to load products. Please try again.');
-        console.error(err);
-        // Use mock data as fallback
-        setProducts(getMockProducts());
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(`Unable to load products from Shopify: ${errorMessage}. Please check your Shopify configuration.`);
+        console.error('Error fetching products:', err);
+        setProducts([]); // Don't use mock data - require Shopify connection
       } finally {
         setLoading(false);
       }
@@ -235,46 +235,4 @@ export default function BuildPage() {
       </div>
     </div>
   );
-}
-
-// Mock products for development/testing
-function getMockProducts(): Product[] {
-  return [
-    {
-      id: '1',
-      title: 'Assorted Chocolates',
-      description: 'A delightful mix of handcrafted chocolates',
-      price: 12.99,
-      image: '',
-      availableForTiers: [],
-      inventory: 100,
-    },
-    {
-      id: '2',
-      title: 'Caramel Collection',
-      description: 'Rich, creamy caramels in various flavors',
-      price: 15.99,
-      image: '',
-      availableForTiers: [],
-      inventory: 50,
-    },
-    {
-      id: '3',
-      title: 'Gourmet Truffles',
-      description: 'Premium chocolate truffles with unique fillings',
-      price: 22.99,
-      image: '',
-      availableForTiers: [],
-      inventory: 75,
-    },
-    {
-      id: '4',
-      title: 'Fudge Sampler',
-      description: 'Assorted fudge flavors in a gift box',
-      price: 18.99,
-      image: '',
-      availableForTiers: [],
-      inventory: 60,
-    },
-  ];
 }

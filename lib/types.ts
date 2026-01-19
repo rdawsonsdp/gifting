@@ -39,6 +39,8 @@ export interface BuyerInfo {
   email: string;
   phone: string;
   company: string;
+  deliveryDate: string;
+  notes?: string;
 }
 
 export interface SelectedProduct {
