@@ -14,7 +14,7 @@ export default function Header() {
           <Link href="/" className="flex items-center min-w-0 group hover:opacity-90 transition-opacity">
             <div className="relative h-16 sm:h-20 md:h-24 w-16 sm:w-20 md:w-24 flex-shrink-0">
               <Image
-                src="/images/bsb-logo-full-color-cmyk-518px@300ppi.jpg"
+                src="/images/BSBLogo.jpeg"
                 alt="Brown Sugar Bakery"
                 width={96}
                 height={96}
