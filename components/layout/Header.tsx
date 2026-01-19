@@ -13,8 +13,8 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center min-w-0 group hover:opacity-90 transition-opacity">
             <div className="relative flex-shrink-0" style={{ 
-              width: '85px', 
-              height: '86px',
+              width: '120px', 
+              height: '121px',
               aspectRatio: '850/859'
             }}>
               <Image
