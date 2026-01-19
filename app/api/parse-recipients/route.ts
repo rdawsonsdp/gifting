@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     else if (fileName.endsWith('.csv')) {
       const csvText = fileBuffer.toString('utf-8');
       
-      return new Promise((resolve) => {
+      return new Promise<NextResponse>((resolve) => {
         Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
               ));
             }
           },
-          error: (error) => {
+          error: (error: Error) => {
             resolve(NextResponse.json(
               { error: `CSV parsing error: ${error.message}` },
               { status: 400 }
