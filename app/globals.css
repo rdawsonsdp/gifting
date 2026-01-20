@@ -5,7 +5,7 @@
   --foreground: #333333;
   
   /* Brown Sugar Bakery Brand Colors */
-  --primary-brown: #E98D3D;
+  --primary-brown: #5D4037;
   --accent-gold: #D4AF37;
   --lavender: #E6E6FA;
   --light-brown: #8B7355;
@@ -172,7 +172,7 @@
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #E98D3D 0%, #D4AF37 100%);
+  background: linear-gradient(135deg, #5D4037 0%, #D4AF37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -360,7 +360,7 @@ a:active {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #E98D3D;
+  background: #5D4037;
 }
 
 /* Vimeo video background fixes */

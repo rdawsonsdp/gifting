@@ -11,7 +11,7 @@ export default function Header() {
     <header className="bg-[#E98D3D] text-white shadow-md sticky top-0 z-50 safe-area-top">
       <div className="container mx-auto px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3 sm:space-x-4 min-w-0 group hover:opacity-90 transition-opacity">
+          <Link href="/" className="flex items-center min-w-0 group hover:opacity-90 transition-opacity">
             <div className="relative flex-shrink-0" style={{ 
               width: '120px', 
               height: '121px',
@@ -27,35 +27,21 @@ export default function Header() {
                 priority
               />
             </div>
-            <div className="flex flex-row items-center gap-2 sm:gap-3 min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-[var(--font-playfair)] text-white truncate">
+            <div className="flex flex-col min-w-0 ml-2 sm:ml-3">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-display truncate">
                 Brown Sugar Bakery
               </h1>
-              <span className="text-lg sm:text-xl md:text-2xl font-bold font-[var(--font-playfair)] text-white whitespace-nowrap">
-                Corporate Gifting
-              </span>
+              <span className="text-xs sm:text-sm text-accent-gold font-semibold">Corporate Gifting</span>
             </div>
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
             <Link 
               href="https://www.brownsugarbakerychicago.com" 
-              className="hover:opacity-80 transition-opacity flex items-center"
+              className="hover:text-[#D4AF37] transition-colors"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Visit Main Site"
             >
-              <div className="relative flex-shrink-0" style={{ 
-                height: '121px',
-              }}>
-                <Image
-                  src="/images/bsb-horizontal-logo-full-color-rgb_600x.svg"
-                  alt="Brown Sugar Bakery"
-                  width={600}
-                  height={200}
-                  className="h-full w-auto object-contain"
-                  priority
-                />
-              </div>
+              Main Site
             </Link>
           </nav>
           <button
@@ -78,23 +64,12 @@ export default function Header() {
           <nav id="mobile-menu" className="md:hidden mt-4 pb-4 border-t border-white/20 pt-4" role="navigation" aria-label="Mobile navigation">
             <Link 
               href="https://www.brownsugarbakerychicago.com" 
-              className="flex items-center py-2 hover:opacity-80 transition-opacity"
+              className="block py-2 hover:text-[#D4AF37] transition-colors"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
-              aria-label="Visit Main Site"
             >
-              <div className="relative flex-shrink-0" style={{ 
-                height: '121px',
-              }}>
-                <Image
-                  src="/images/bsb-horizontal-logo-full-color-rgb_600x.svg"
-                  alt="Brown Sugar Bakery"
-                  width={600}
-                  height={200}
-                  className="h-full w-auto object-contain"
-                />
-              </div>
+              Main Site
             </Link>
           </nav>
         )}
