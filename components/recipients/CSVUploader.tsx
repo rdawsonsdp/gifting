@@ -25,7 +25,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
     onError(''); // Clear previous errors
 
     if (!isValidFileType(file.name)) {
-      onError('Please upload a CSV, XLS, or XLSX file.');
+      onError('Please upload a comma separated text file (.csv) or Excel file (.xls, .xlsx).');
       setUploading(false);
       return;
     }
@@ -68,7 +68,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
     if (file && isValidFileType(file.name)) {
       processFile(file);
     } else {
-      onError('Please upload a CSV, XLS, or XLSX file.');
+      onError('Please upload a comma separated text file (.csv) or Excel file (.xls, .xlsx).');
     }
   }, [processFile, onError]);
 
@@ -140,7 +140,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
               />
             </label>
             <p className="text-xs sm:text-sm text-[#8B7355] mt-3 sm:mt-4">
-              CSV, XLS, or XLSX format supported
+              Comma separated text file (.csv) or Excel file (.xls, .xlsx) supported
             </p>
           </>
         )}
@@ -152,10 +152,10 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
           onClick={handleDownloadTemplate}
           className="w-full"
         >
-          Download CSV Template
+          Download Template File
         </Button>
         <p className="text-xs text-[#8B7355] mt-2 text-center">
-          Excel files (.xlsx, .xls) should use the same column format
+          Template can be opened in Excel, Google Sheets, or any spreadsheet application
         </p>
       </div>
 

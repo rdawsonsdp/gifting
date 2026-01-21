@@ -17,6 +17,7 @@ export interface Product {
   availableForTiers: string[];
   inventory: number;
   variantId?: string; // Shopify variant ID
+  compareAtPrice?: number; // Original price before discount
 }
 
 export interface Recipient {
@@ -48,12 +49,25 @@ export interface SelectedProduct {
   quantity: number;
 }
 
+export interface SelectedPackage {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  longDescription: string;
+  price: number;
+  image: string;
+  includes: string[];
+  quantity: number;
+}
+
 export interface GiftState {
   selectedTier: GiftTier | null;
   selectedProducts: SelectedProduct[];
+  selectedPackage: SelectedPackage | null;
   recipients: Recipient[];
   buyerInfo: BuyerInfo | null;
-  currentStep: 'tier' | 'build' | 'recipients' | 'review' | 'confirmation';
+  currentStep: 'tier' | 'build' | 'package' | 'recipients' | 'review' | 'confirmation';
 }
 
 export type GiftAction =
@@ -61,6 +75,7 @@ export type GiftAction =
   | { type: 'ADD_PRODUCT'; payload: Product }
   | { type: 'REMOVE_PRODUCT'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { productId: string; quantity: number } }
+  | { type: 'SELECT_PACKAGE'; payload: { package: Omit<SelectedPackage, 'quantity'>; quantity: number } }
   | { type: 'SET_RECIPIENTS'; payload: Recipient[] }
   | { type: 'SET_BUYER_INFO'; payload: BuyerInfo }
   | { type: 'SET_STEP'; payload: GiftState['currentStep'] }

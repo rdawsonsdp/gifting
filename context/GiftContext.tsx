@@ -6,6 +6,7 @@ import { GiftState, GiftAction, GiftTier, Product, Recipient, BuyerInfo } from '
 const initialState: GiftState = {
   selectedTier: null,
   selectedProducts: [],
+  selectedPackage: null,
   recipients: [],
   buyerInfo: null,
   currentStep: 'tier',
@@ -61,6 +62,18 @@ function giftReducer(state: GiftState, action: GiftAction): GiftState {
       return { ...state, selectedProducts: updated };
     }
 
+    case 'SELECT_PACKAGE':
+      return {
+        ...state,
+        selectedPackage: {
+          ...action.payload.package,
+          quantity: action.payload.quantity,
+        },
+        selectedTier: null,
+        selectedProducts: [],
+        currentStep: 'package',
+      };
+
     case 'SET_RECIPIENTS':
       return {
         ...state,
@@ -109,6 +122,10 @@ export function GiftProvider({ children }: { children: ReactNode }) {
   };
 
   const canProceedToRecipients = () => {
+    // If a package is selected, can always proceed
+    if (state.selectedPackage) return true;
+
+    // For custom builds, check tier budget
     if (!state.selectedTier) return false;
     const total = getCurrentTotal();
     return total >= state.selectedTier.minSpend && total <= state.selectedTier.maxSpend;

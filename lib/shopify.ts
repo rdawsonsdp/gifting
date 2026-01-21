@@ -138,6 +138,105 @@ export async function fetchGiftProducts(): Promise<Product[]> {
   }
 }
 
+// Fetch products from the "Corporate Gifting Special Offer" collection
+export async function fetchSpecialOfferProducts(): Promise<Product[]> {
+  const collectionHandle = process.env.SHOPIFY_SPECIAL_OFFER_COLLECTION_HANDLE || 'corporate-gifting-special-offer';
+  console.log('Fetching special offers from collection:', collectionHandle);
+
+  const query = `
+    query getCollectionProducts($handle: String!) {
+      collectionByHandle(handle: $handle) {
+        id
+        title
+        products(first: 20) {
+          edges {
+            node {
+              id
+              title
+              description
+              featuredImage {
+                url
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price
+                    compareAtPrice
+                    inventoryQuantity
+                  }
+                }
+              }
+              tags
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyRequest<{
+      collectionByHandle: {
+        id: string;
+        title: string;
+        products: {
+          edges: Array<{
+            node: {
+              id: string;
+              title: string;
+              description: string;
+              featuredImage: { url: string } | null;
+              variants: {
+                edges: Array<{
+                  node: {
+                    id: string;
+                    price: string;
+                    compareAtPrice: string | null;
+                    inventoryQuantity: number;
+                  };
+                }>;
+              };
+              tags: string[];
+            };
+          }>;
+        };
+      } | null;
+    }>(query, { handle: collectionHandle });
+
+    if (!data.collectionByHandle) {
+      console.warn(`Special offer collection "${collectionHandle}" not found. Please check the collection handle in Shopify.`);
+      console.warn('Hint: Go to Shopify Admin > Products > Collections > [Your Collection] and check the URL handle in settings.');
+      return [];
+    }
+
+    console.log(`Found collection "${data.collectionByHandle.title}" with products`);
+
+    if (!data.collectionByHandle.products.edges.length) {
+      console.warn(`Special offer collection "${collectionHandle}" exists but has no products.`);
+      return [];
+    }
+
+    return data.collectionByHandle.products.edges.map(({ node }) => {
+      const variant = node.variants.edges[0]?.node;
+      return {
+        id: node.id.split('/').pop() || '',
+        title: node.title,
+        description: node.description || '',
+        price: parseFloat(variant?.price || '0'),
+        image: node.featuredImage?.url || '',
+        availableForTiers: node.tags.filter(tag => ['bronze', 'silver', 'gold', 'platinum'].includes(tag.toLowerCase())),
+        inventory: variant?.inventoryQuantity || 0,
+        variantId: variant?.id.split('/').pop() || undefined,
+        compareAtPrice: variant?.compareAtPrice ? parseFloat(variant.compareAtPrice) : undefined,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching special offer products:', error);
+    return [];
+  }
+}
+
 export async function createDraftOrder(
   lineItems: Array<{ variantId: string; quantity: number }>,
   fulfillmentFee: number,
