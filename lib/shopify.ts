@@ -441,8 +441,8 @@ export async function createDraftOrder(
     quantity: item.quantity * recipientCount, // Multiply by recipient count
   }));
 
-  // Add fulfillment fee as custom line item (using DraftOrderLineItemInput)
-  // Note: For MVP, we'll add fulfillment fee to the note and handle pricing manually
+  // Add delivery fee as custom line item (using DraftOrderLineItemInput)
+  // Note: For MVP, we'll add delivery fee to the note and handle pricing manually
   // Custom line items can be added later if needed via Shopify admin
   const customLineItems: Array<{
     title: string;
@@ -450,13 +450,13 @@ export async function createDraftOrder(
     originalUnitPrice: string;
   }> = [
     {
-      title: `Fulfillment Fee (${recipientCount} recipients × $${fulfillmentFee.toFixed(2)})`,
+      title: `Delivery Fee`,
       quantity: 1,
-      originalUnitPrice: (fulfillmentFee * recipientCount).toFixed(2),
+      originalUnitPrice: fulfillmentFee.toFixed(2),
     },
   ];
 
-  const fulfillmentTotal = fulfillmentFee * recipientCount;
+  const deliveryFee = fulfillmentFee; // Flat delivery fee
   
   // Format delivery date for display
   const deliveryDateFormatted = buyerInfo.deliveryDate 
@@ -480,8 +480,7 @@ ${buyerInfo.notes ? `\nOrder Notes:\n${buyerInfo.notes}` : ''}
 
 Order Details:
 - Total Recipients: ${recipientCount}
-- Fulfillment Fee: $${fulfillmentFee.toFixed(2)} per recipient
-- Total Fulfillment Fee: $${fulfillmentTotal.toFixed(2)}
+- Delivery Fee: $${deliveryFee.toFixed(2)}
 
 Note: Complete recipient list is available in the Excel spreadsheet (link will be added below).`;
 
@@ -533,8 +532,8 @@ Note: Complete recipient list is available in the Excel spreadsheet (link will b
           value: 'corporate_gifting',
         },
         {
-          key: 'fulfillment_fee',
-          value: fulfillmentTotal.toFixed(2),
+          key: 'delivery_fee',
+          value: deliveryFee.toFixed(2),
         },
         {
           key: 'delivery_date',
@@ -556,8 +555,8 @@ Note: Complete recipient list is available in the Excel spreadsheet (link will b
         company: buyerInfo.company,
         phone: buyerInfo.phone,
       },
-      // Note: customLineItems removed for MVP - fulfillment fee added to note and customAttributes
-      // Staff will manually add fulfillment fee as line item in Shopify admin
+      // Note: customLineItems removed for MVP - delivery fee added to note and customAttributes
+      // Staff will manually add delivery fee as line item in Shopify admin
     },
   };
 

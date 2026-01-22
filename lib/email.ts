@@ -156,7 +156,7 @@ export async function sendOrderConfirmationEmail(
           <td style="padding: 8px 0; text-align: right;">$${pricing.giftSubtotal.toFixed(2)}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0;">Fulfillment Fee (${recipients.length} × $${pricing.perRecipientFee.toFixed(2)}):</td>
+          <td style="padding: 8px 0;">Delivery Fee:</td>
           <td style="padding: 8px 0; text-align: right;">$${pricing.fulfillmentSubtotal.toFixed(2)}</td>
         </tr>
         <tr style="border-top: 2px solid #E98D3D; font-size: 18px; font-weight: bold; color: #E98D3D;">
@@ -258,7 +258,7 @@ ${products.map((sp) => `- ${sp.product.title} × ${sp.quantity} @ $${sp.product.
 
 ORDER SUMMARY
 Gift Subtotal: $${pricing.giftSubtotal.toFixed(2)}
-Fulfillment Fee (${recipients.length} × $${pricing.perRecipientFee.toFixed(2)}): $${pricing.fulfillmentSubtotal.toFixed(2)}
+Delivery Fee: $${pricing.fulfillmentSubtotal.toFixed(2)}
 Total: $${pricing.total.toFixed(2)}
 
 ${buyerInfo.notes ? `ORDER NOTES\n${buyerInfo.notes}\n` : ''}

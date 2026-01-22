@@ -581,10 +581,6 @@ export default function RecipientsPage() {
               <span className="whitespace-nowrap">${giftTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Fulfillment fee per recipient:</span>
-              <span className="whitespace-nowrap">${pricing.perRecipientFee.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
               <span>Number of recipients:</span>
               <span className="whitespace-nowrap">{recipientCount}</span>
             </div>
@@ -594,7 +590,7 @@ export default function RecipientsPage() {
                 <span className="whitespace-nowrap">${pricing.giftSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-semibold text-xs sm:text-sm mt-1">
-                <span className="pr-2">Fulfillment ({recipientCount} × ${pricing.perRecipientFee.toFixed(2)}):</span>
+                <span className="pr-2">Delivery Fee:</span>
                 <span className="whitespace-nowrap">${pricing.fulfillmentSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-semibold text-xs sm:text-sm mt-1">

@@ -1,8 +1,9 @@
+// Default flat delivery fee for all orders
+export const DEFAULT_DELIVERY_FEE = 40.00;
+
 export function calculateFulfillmentFee(recipientCount: number): number {
-  if (recipientCount <= 25) return 8;
-  if (recipientCount <= 50) return 6;
-  if (recipientCount <= 100) return 5;
-  return 4; // 100+ recipients
+  // Flat delivery fee - returns per-order amount (not per recipient)
+  return DEFAULT_DELIVERY_FEE;
 }
 
 export function calculateOrderTotal(
@@ -14,14 +15,14 @@ export function calculateOrderTotal(
   total: number;
   perRecipientFee: number;
 } {
-  const perRecipientFee = calculateFulfillmentFee(recipientCount);
+  const deliveryFee = DEFAULT_DELIVERY_FEE;
   const giftSubtotal = giftTotal * recipientCount;
-  const fulfillmentSubtotal = perRecipientFee * recipientCount;
-  
+  const fulfillmentSubtotal = deliveryFee; // Flat fee per order
+
   return {
     giftSubtotal,
     fulfillmentSubtotal,
     total: giftSubtotal + fulfillmentSubtotal,
-    perRecipientFee
+    perRecipientFee: deliveryFee / recipientCount // For display purposes
   };
 }

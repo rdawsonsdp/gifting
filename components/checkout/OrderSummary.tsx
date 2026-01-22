@@ -51,10 +51,6 @@ export default function OrderSummary({
           <span>Gift cost per recipient:</span>
           <span className="whitespace-nowrap">${giftTotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-xs sm:text-sm mt-1">
-          <span>Fulfillment fee per recipient:</span>
-          <span className="whitespace-nowrap">${pricing.perRecipientFee.toFixed(2)}</span>
-        </div>
       </div>
 
       {/* Pricing Breakdown */}
@@ -64,7 +60,7 @@ export default function OrderSummary({
           <span className="whitespace-nowrap">${pricing.giftSubtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="pr-2">Fulfillment ({recipientCount} × ${pricing.perRecipientFee.toFixed(2)}):</span>
+          <span className="pr-2">Delivery Fee:</span>
           <span className="whitespace-nowrap">${pricing.fulfillmentSubtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-[#8B7355] text-xs mt-2">
