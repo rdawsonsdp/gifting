@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { TIERS } from '@/lib/tiers';
-import { PACKAGES } from '@/lib/packages';
+import { PACKAGES, GiftPackage } from '@/lib/packages';
 import { Product } from '@/lib/types';
 import TierCard from '@/components/gift-builder/TierCard';
 import PackageCard from '@/components/gift-builder/PackageCard';
@@ -31,30 +31,28 @@ const VIMEO_URL = 'https://vimeo.com/984629444/4acb8e88e5';
 const VIMEO_VIDEO_ID = getVimeoVideoId(VIMEO_URL);
 
 export default function Home() {
-  const [packageImages, setPackageImages] = useState<string[]>([]);
+  const [packages, setPackages] = useState<GiftPackage[]>(PACKAGES);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
 
   useEffect(() => {
-    async function fetchProductImages() {
+    async function fetchPackages() {
       try {
-        const response = await fetch('/api/products');
+        const response = await fetch('/api/packages');
         if (response.ok) {
           const data = await response.json();
-          if (data.products && Array.isArray(data.products)) {
-            // Get first 3 products with images for package placeholders
-            const images = data.products
-              .filter((p: Product) => p.image && p.image.trim() !== '')
-              .slice(0, 3)
-              .map((p: Product) => p.image);
-            setPackageImages(images);
+          if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
+            // Use packages from Shopify's Corporate Gift Packages collection
+            setPackages(data.packages);
           }
+          // If no packages from Shopify, keep the default PACKAGES
         }
       } catch (error) {
-        console.error('Error fetching product images:', error);
+        console.error('Error fetching packages:', error);
+        // Keep default PACKAGES on error
       }
     }
 
-    fetchProductImages();
+    fetchPackages();
   }, []);
 
   return (
@@ -170,9 +168,9 @@ export default function Home() {
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
-          {PACKAGES.map((pkg, index) => (
+          {packages.map((pkg, index) => (
             <div key={pkg.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-              <PackageCard package={pkg} image={packageImages[index]} />
+              <PackageCard package={pkg} />
             </div>
           ))}
         </div>

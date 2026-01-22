@@ -18,6 +18,7 @@ export interface Product {
   inventory: number;
   variantId?: string; // Shopify variant ID
   compareAtPrice?: number; // Original price before discount
+  slug?: string; // Shopify product handle
 }
 
 export interface Recipient {

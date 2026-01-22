@@ -138,6 +138,193 @@ export async function fetchGiftProducts(): Promise<Product[]> {
   }
 }
 
+// Fetch products from the "Corporate Gift Packages" collection
+export async function fetchGiftPackages(): Promise<Product[]> {
+  const collectionHandle = 'corporate-gift-packages';
+  console.log('Fetching gift packages from collection:', collectionHandle);
+
+  const query = `
+    query getCollectionProducts($handle: String!) {
+      collectionByHandle(handle: $handle) {
+        id
+        title
+        products(first: 20) {
+          edges {
+            node {
+              id
+              title
+              description
+              handle
+              featuredImage {
+                url
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price
+                    inventoryQuantity
+                  }
+                }
+              }
+              tags
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyRequest<{
+      collectionByHandle: {
+        id: string;
+        title: string;
+        products: {
+          edges: Array<{
+            node: {
+              id: string;
+              title: string;
+              description: string;
+              handle: string;
+              featuredImage: { url: string } | null;
+              variants: {
+                edges: Array<{
+                  node: {
+                    id: string;
+                    price: string;
+                    inventoryQuantity: number;
+                  };
+                }>;
+              };
+              tags: string[];
+            };
+          }>;
+        };
+      } | null;
+    }>(query, { handle: collectionHandle });
+
+    if (!data.collectionByHandle) {
+      console.warn(`Gift packages collection "${collectionHandle}" not found.`);
+      return [];
+    }
+
+    console.log(`Found collection "${data.collectionByHandle.title}" with ${data.collectionByHandle.products.edges.length} packages`);
+
+    return data.collectionByHandle.products.edges.map(({ node }) => {
+      const variant = node.variants.edges[0]?.node;
+      return {
+        id: node.id.split('/').pop() || '',
+        title: node.title,
+        description: node.description || '',
+        price: parseFloat(variant?.price || '0'),
+        image: node.featuredImage?.url || '',
+        availableForTiers: node.tags.filter(tag => ['bronze', 'silver', 'gold', 'platinum'].includes(tag.toLowerCase())),
+        inventory: variant?.inventoryQuantity || 0,
+        variantId: variant?.id.split('/').pop() || undefined,
+        slug: node.handle,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching gift packages:', error);
+    return [];
+  }
+}
+
+// Fetch a single product by handle from Shopify
+export async function fetchProductByHandle(handle: string): Promise<Product | null> {
+  console.log('Fetching product by handle:', handle);
+
+  const query = `
+    query getProductByHandle($handle: String!) {
+      productByHandle(handle: $handle) {
+        id
+        title
+        description
+        descriptionHtml
+        handle
+        featuredImage {
+          url
+        }
+        images(first: 10) {
+          edges {
+            node {
+              url
+              altText
+            }
+          }
+        }
+        variants(first: 1) {
+          edges {
+            node {
+              id
+              price
+              inventoryQuantity
+            }
+          }
+        }
+        tags
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyRequest<{
+      productByHandle: {
+        id: string;
+        title: string;
+        description: string;
+        descriptionHtml: string;
+        handle: string;
+        featuredImage: { url: string } | null;
+        images: {
+          edges: Array<{
+            node: {
+              url: string;
+              altText: string | null;
+            };
+          }>;
+        };
+        variants: {
+          edges: Array<{
+            node: {
+              id: string;
+              price: string;
+              inventoryQuantity: number;
+            };
+          }>;
+        };
+        tags: string[];
+      } | null;
+    }>(query, { handle });
+
+    if (!data.productByHandle) {
+      console.warn(`Product with handle "${handle}" not found.`);
+      return null;
+    }
+
+    const node = data.productByHandle;
+    const variant = node.variants.edges[0]?.node;
+
+    return {
+      id: node.id.split('/').pop() || '',
+      title: node.title,
+      description: node.description || '',
+      price: parseFloat(variant?.price || '0'),
+      image: node.featuredImage?.url || '',
+      availableForTiers: node.tags.filter(tag => ['bronze', 'silver', 'gold', 'platinum'].includes(tag.toLowerCase())),
+      inventory: variant?.inventoryQuantity || 0,
+      variantId: variant?.id.split('/').pop() || undefined,
+      slug: node.handle,
+      descriptionHtml: node.descriptionHtml,
+      images: node.images.edges.map(edge => edge.node.url),
+    } as Product & { descriptionHtml?: string; images?: string[] };
+  } catch (error) {
+    console.error('Error fetching product by handle:', error);
+    return null;
+  }
+}
+
 // Fetch products from the "Corporate Gifting Special Offer" collection
 export async function fetchSpecialOfferProducts(): Promise<Product[]> {
   const collectionHandle = process.env.SHOPIFY_SPECIAL_OFFER_COLLECTION_HANDLE || 'corporate-gifting-special-offer';

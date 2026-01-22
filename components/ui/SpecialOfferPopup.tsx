@@ -94,7 +94,7 @@ export default function SpecialOfferPopup({ delayMs = 3000, onClose }: SpecialOf
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-2xl overflow-hidden max-w-lg w-full shadow-2xl animate-scale-in"
+        className="relative bg-white rounded-2xl overflow-hidden max-w-lg w-full shadow-2xl animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Special Offer Banner */}
@@ -103,15 +103,18 @@ export default function SpecialOfferPopup({ delayMs = 3000, onClose }: SpecialOf
           <p className="text-sm font-semibold uppercase tracking-wider relative z-10">
             Special Offers
           </p>
-          <button
-            onClick={handleClose}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
+
+        {/* Close Button - Upper Right Corner */}
+        <button
+          onClick={handleClose}
+          className="absolute top-2 right-2 w-10 h-10 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all z-20 border border-gray-300"
+          aria-label="Close popup"
+        >
+          <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
 
         {/* Carousel */}
         <div className="relative">

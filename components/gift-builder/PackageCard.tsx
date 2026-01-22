@@ -5,9 +5,30 @@ import { GiftPackage } from '@/lib/packages';
 import Button from '@/components/ui/Button';
 
 interface PackageCardProps {
-  package: GiftPackage;
+  package: GiftPackage & { tier?: string | null };
   image?: string;
 }
+
+const tierConfig: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  bronze: {
+    label: 'Bronze',
+    bg: 'bg-gradient-to-br from-amber-600 to-amber-800',
+    text: 'text-white',
+    border: 'border-amber-500',
+  },
+  silver: {
+    label: 'Silver',
+    bg: 'bg-gradient-to-br from-gray-300 to-gray-500',
+    text: 'text-gray-900',
+    border: 'border-gray-400',
+  },
+  gold: {
+    label: 'Gold',
+    bg: 'bg-gradient-to-br from-yellow-400 to-amber-500',
+    text: 'text-amber-900',
+    border: 'border-yellow-400',
+  },
+};
 
 export default function PackageCard({ package: pkg, image }: PackageCardProps) {
   const router = useRouter();
@@ -17,6 +38,7 @@ export default function PackageCard({ package: pkg, image }: PackageCardProps) {
   };
 
   const displayImage = image || pkg.image;
+  const tier = (pkg as any).tier as string | null;
 
   return (
     <div className="relative group">
@@ -56,6 +78,14 @@ export default function PackageCard({ package: pkg, image }: PackageCardProps) {
               </svg>
             </div>
           )}
+
+          {/* Tier Badge - Upper Right Corner */}
+          {tier && tierConfig[tier] && (
+            <div className={`absolute top-3 right-3 z-10 px-3 py-1.5 rounded-full shadow-lg ${tierConfig[tier].bg} ${tierConfig[tier].text} border ${tierConfig[tier].border}`}>
+              <span className="text-xs font-bold uppercase tracking-wide">{tierConfig[tier].label}</span>
+            </div>
+          )}
+
           {/* Golden overlay on hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-amber-300/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
@@ -75,15 +105,24 @@ export default function PackageCard({ package: pkg, image }: PackageCardProps) {
             <h3 className="text-lg sm:text-xl font-bold text-primary-brown mb-2 font-display">
               {pkg.name}
             </h3>
-            <p className="text-sm sm:text-base text-charcoal/70 mb-4 sm:mb-6 flex-grow">
-              {pkg.description}
-            </p>
-            <Button
-              onClick={handleSelect}
-              className="w-full text-sm sm:text-base py-2.5 sm:py-3 btn-primary"
-            >
-              View Package
-            </Button>
+            {pkg.price > 0 && (
+              <p className="text-2xl font-bold text-primary-brown mb-3">
+                ${pkg.price.toFixed(2)}
+              </p>
+            )}
+            {pkg.description && (
+              <p className="text-sm text-charcoal/70 mb-4 line-clamp-3 flex-grow">
+                {pkg.description}
+              </p>
+            )}
+            <div className="mt-auto">
+              <Button
+                onClick={handleSelect}
+                className="w-full text-sm sm:text-base py-2.5 sm:py-3 btn-primary"
+              >
+                View Package
+              </Button>
+            </div>
           </div>
         </div>
       </div>
