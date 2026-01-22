@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useGift } from '@/context/GiftContext';
+import { calculateOrderTotal } from '@/lib/pricing';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -15,6 +16,7 @@ function ConfirmationContent() {
   const { state } = useGift();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const id = searchParams.get('orderId');
@@ -46,6 +48,55 @@ function ConfirmationContent() {
     (sum, sp) => sum + sp.product.price * sp.quantity,
     0
   );
+  const pricing = calculateOrderTotal(giftTotal, recipientCount, state.selectedProducts);
+
+  const handleDownloadInvoice = async () => {
+    if (!orderNumber || downloading) return;
+
+    setDownloading(true);
+    try {
+      const response = await fetch('/api/invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderNumber,
+          buyerInfo: state.buyerInfo,
+          products: state.selectedProducts,
+          recipients: state.recipients,
+          pricing: {
+            giftSubtotal: pricing.giftSubtotal,
+            fulfillmentSubtotal: pricing.fulfillmentSubtotal,
+            total: pricing.total,
+            shippingPerRecipient: pricing.shippingPerRecipient,
+          },
+          tier: state.selectedTier?.name,
+          specialInstructions: state.buyerInfo?.notes,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate invoice');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice_${orderNumber.replace('#', '')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      alert('Failed to download invoice. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -139,6 +190,38 @@ function ConfirmationContent() {
             </p>
           </div>
         </Card>
+
+        {/* Download Invoice Button */}
+        {orderNumber && (
+          <Card className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="font-semibold text-[#E98D3D] text-sm sm:text-base">Download Your Invoice</h3>
+                <p className="text-xs sm:text-sm text-[#8B7355]">Save a PDF copy of your order invoice</p>
+              </div>
+              <Button
+                onClick={handleDownloadInvoice}
+                disabled={downloading}
+                variant="secondary"
+                className="w-full sm:w-auto flex items-center justify-center gap-2"
+              >
+                {downloading ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download Invoice PDF
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <Button onClick={() => router.push('/')} className="w-full sm:w-auto">

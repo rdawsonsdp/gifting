@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGift } from '@/context/GiftContext';
-import { Recipient } from '@/lib/types';
-import { calculateFulfillmentFee, calculateOrderTotal } from '@/lib/pricing';
+import { Recipient, DeliveryMethod as DeliveryMethodType } from '@/lib/types';
+import { calculateOrderTotal, getDeliveryTierInfo } from '@/lib/pricing';
 import { removeDuplicates, findDuplicates, areRecipientsDuplicate } from '@/lib/csv-utils';
 import CSVUploader from '@/components/recipients/CSVUploader';
 import RecipientTable from '@/components/recipients/RecipientTable';
@@ -68,8 +68,8 @@ export default function RecipientsPage() {
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
   const [loadingRates, setLoadingRates] = useState(true);
 
-  // One-location delivery form state
-  const [oneLocationForm, setOneLocationForm] = useState({
+  // Delivery address form state
+  const [deliveryForm, setDeliveryForm] = useState({
     companyName: '',
     contactName: '',
     address1: '',
@@ -77,9 +77,30 @@ export default function RecipientsPage() {
     city: '',
     state: '',
     zip: '',
+    phone: '',
+    email: '',
     quantity: 1,
     giftMessage: '',
   });
+
+  // Customer address form state
+  const [customerForm, setCustomerForm] = useState({
+    companyName: '',
+    contactName: '',
+    address1: '',
+    address2: '',
+    city: '',
+    state: '',
+    zip: '',
+    phone: '',
+    email: '',
+  });
+
+  // Same as delivery address checkbox
+  const [sameAsDelivery, setSameAsDelivery] = useState(false);
+
+  // Legacy alias for backward compatibility
+  const oneLocationForm = deliveryForm;
 
   // Fetch shipping rates on mount
   useEffect(() => {
@@ -129,11 +150,44 @@ export default function RecipientsPage() {
 
   const validRecipients = recipients.filter(r => r.isValid);
 
-  const canProceed = deliveryMethod === 'one-location'
-    ? oneLocationForm.companyName && oneLocationForm.address1 && oneLocationForm.city && oneLocationForm.state && oneLocationForm.zip
-    : validRecipients.length > 0 && validRecipients.length === recipients.length;
+  // Validate email format
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const pricing = calculateOrderTotal(giftTotal, recipientCount);
+  // Validate phone (at least 10 digits)
+  const isValidPhone = (phone: string) => phone.replace(/\D/g, '').length >= 10;
+
+  // Check if customer form is valid (all fields required)
+  const isCustomerFormValid =
+    customerForm.contactName.trim() !== '' &&
+    customerForm.companyName.trim() !== '' &&
+    customerForm.address1.trim() !== '' &&
+    customerForm.city.trim() !== '' &&
+    customerForm.state.trim() !== '' &&
+    customerForm.zip.trim() !== '' &&
+    customerForm.phone.trim() !== '' &&
+    isValidPhone(customerForm.phone) &&
+    customerForm.email.trim() !== '' &&
+    isValidEmail(customerForm.email);
+
+  // Check if delivery form is valid (for one-location delivery - all fields required)
+  const isDeliveryFormValid =
+    deliveryForm.companyName.trim() !== '' &&
+    deliveryForm.contactName.trim() !== '' &&
+    deliveryForm.address1.trim() !== '' &&
+    deliveryForm.city.trim() !== '' &&
+    deliveryForm.state.trim() !== '' &&
+    deliveryForm.zip.trim() !== '' &&
+    deliveryForm.phone.trim() !== '' &&
+    isValidPhone(deliveryForm.phone) &&
+    deliveryForm.email.trim() !== '' &&
+    isValidEmail(deliveryForm.email);
+
+  const canProceed = deliveryMethod === 'one-location'
+    ? isDeliveryFormValid && isCustomerFormValid
+    : validRecipients.length > 0 && validRecipients.length === recipients.length && isCustomerFormValid;
+
+  // Pass products for per-item shipping calculation
+  const pricing = calculateOrderTotal(giftTotal, recipientCount, state.selectedProducts);
 
   // Calculate shipping costs
   const shippingPerRecipient = selectedShippingRate?.price ?? 0;
@@ -197,38 +251,112 @@ export default function RecipientsPage() {
 
   const handleContinue = () => {
     if (deliveryMethod === 'one-location' && canProceed) {
-      // Create a single recipient from the one-location form
+      // Create a single recipient from the delivery form
       const singleRecipient: Recipient = {
         id: 'one-location-1',
-        firstName: oneLocationForm.contactName.split(' ')[0] || 'Contact',
-        lastName: oneLocationForm.contactName.split(' ').slice(1).join(' ') || '',
-        company: oneLocationForm.companyName,
-        address1: oneLocationForm.address1,
-        address2: oneLocationForm.address2,
-        city: oneLocationForm.city,
-        state: oneLocationForm.state,
-        zip: oneLocationForm.zip,
-        giftMessage: oneLocationForm.giftMessage,
+        firstName: deliveryForm.contactName.split(' ')[0] || 'Contact',
+        lastName: deliveryForm.contactName.split(' ').slice(1).join(' ') || '',
+        company: deliveryForm.companyName,
+        address1: deliveryForm.address1,
+        address2: deliveryForm.address2,
+        city: deliveryForm.city,
+        state: deliveryForm.state,
+        zip: deliveryForm.zip,
+        phone: deliveryForm.phone,
+        email: deliveryForm.email,
+        giftMessage: deliveryForm.giftMessage,
         isValid: true,
         errors: [],
       };
 
       // Create array with quantity of recipients (all same address)
-      const recipientsArray = Array(oneLocationForm.quantity).fill(null).map((_, i) => ({
+      const recipientsArray = Array(deliveryForm.quantity).fill(null).map((_, i) => ({
         ...singleRecipient,
         id: `one-location-${i + 1}`,
       }));
 
       dispatch({ type: 'SET_RECIPIENTS', payload: recipientsArray });
+
+      // Store delivery method
+      if (selectedShippingRate) {
+        const deliveryMethodData: DeliveryMethodType = {
+          id: selectedShippingRate.id as DeliveryMethodType['id'],
+          name: selectedShippingRate.name,
+          price: selectedShippingRate.price,
+          estimatedDays: selectedShippingRate.estimatedDays,
+        };
+        dispatch({ type: 'SET_DELIVERY_METHOD', payload: deliveryMethodData });
+      }
+
+      // Store customer info for later use
+      const buyerInfo = {
+        name: customerForm.contactName,
+        email: customerForm.email,
+        phone: customerForm.phone,
+        company: customerForm.companyName,
+        deliveryDate: '',
+      };
+      dispatch({ type: 'SET_BUYER_INFO', payload: buyerInfo });
+
       router.push('/review');
     } else if (canProceed) {
+      // Store delivery method for shipping methods
+      if (selectedShippingRate) {
+        const deliveryMethodData: DeliveryMethodType = {
+          id: selectedShippingRate.id as DeliveryMethodType['id'],
+          name: selectedShippingRate.name,
+          price: selectedShippingRate.price,
+          estimatedDays: selectedShippingRate.estimatedDays,
+        };
+        dispatch({ type: 'SET_DELIVERY_METHOD', payload: deliveryMethodData });
+      }
+
+      // Store customer info for shipping methods
+      const buyerInfo = {
+        name: customerForm.contactName,
+        email: customerForm.email,
+        phone: customerForm.phone,
+        company: customerForm.companyName,
+        deliveryDate: '',
+      };
+      dispatch({ type: 'SET_BUYER_INFO', payload: buyerInfo });
+
       router.push('/review');
     }
   };
 
-  const handleOneLocationChange = (field: string, value: string | number) => {
-    setOneLocationForm(prev => ({ ...prev, [field]: value }));
+  const handleDeliveryChange = (field: string, value: string | number) => {
+    setDeliveryForm(prev => ({ ...prev, [field]: value }));
+    // If same as delivery is checked, also update customer form (except quantity and giftMessage)
+    if (sameAsDelivery && field !== 'quantity' && field !== 'giftMessage') {
+      setCustomerForm(prev => ({ ...prev, [field]: value }));
+    }
   };
+
+  const handleCustomerChange = (field: string, value: string) => {
+    setCustomerForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSameAsDeliveryChange = (checked: boolean) => {
+    setSameAsDelivery(checked);
+    if (checked) {
+      // Copy delivery address to customer address
+      setCustomerForm({
+        companyName: deliveryForm.companyName,
+        contactName: deliveryForm.contactName,
+        address1: deliveryForm.address1,
+        address2: deliveryForm.address2,
+        city: deliveryForm.city,
+        state: deliveryForm.state,
+        zip: deliveryForm.zip,
+        phone: deliveryForm.phone,
+        email: deliveryForm.email,
+      });
+    }
+  };
+
+  // Legacy alias for backward compatibility
+  const handleOneLocationChange = handleDeliveryChange;
 
   if (!hasValidOrder) {
     return (
@@ -395,7 +523,7 @@ export default function RecipientsPage() {
         </Card>
       )}
 
-      {/* One-Location Delivery Address Form */}
+      {/* Delivery Address Form (for one-location delivery) */}
       {deliveryMethod === 'one-location' && (
         <Card className="mb-6 sm:mb-8 animate-fade-up">
           <h2 className="text-base sm:text-lg font-semibold text-primary-brown mb-4 font-display">
@@ -408,23 +536,57 @@ export default function RecipientsPage() {
               </label>
               <input
                 type="text"
-                value={oneLocationForm.companyName}
-                onChange={(e) => handleOneLocationChange('companyName', e.target.value)}
+                value={deliveryForm.companyName}
+                onChange={(e) => handleDeliveryChange('companyName', e.target.value)}
                 className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                 placeholder="Company name"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-charcoal/70 mb-1">
-                Contact Name
+                Contact Name *
               </label>
               <input
                 type="text"
-                value={oneLocationForm.contactName}
-                onChange={(e) => handleOneLocationChange('contactName', e.target.value)}
+                value={deliveryForm.contactName}
+                onChange={(e) => handleDeliveryChange('contactName', e.target.value)}
                 className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                 placeholder="Contact name"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                value={deliveryForm.phone}
+                onChange={(e) => handleDeliveryChange('phone', e.target.value)}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  deliveryForm.phone && !isValidPhone(deliveryForm.phone) ? 'border-red-400' : 'border-light-brown/30'
+                }`}
+                placeholder="(555) 555-5555"
+              />
+              {deliveryForm.phone && !isValidPhone(deliveryForm.phone) && (
+                <p className="text-xs text-red-500 mt-1">Please enter a valid phone number</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                value={deliveryForm.email}
+                onChange={(e) => handleDeliveryChange('email', e.target.value)}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  deliveryForm.email && !isValidEmail(deliveryForm.email) ? 'border-red-400' : 'border-light-brown/30'
+                }`}
+                placeholder="email@company.com"
+              />
+              {deliveryForm.email && !isValidEmail(deliveryForm.email) && (
+                <p className="text-xs text-red-500 mt-1">Please enter a valid email address</p>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-charcoal/70 mb-1">
@@ -432,8 +594,8 @@ export default function RecipientsPage() {
               </label>
               <input
                 type="text"
-                value={oneLocationForm.address1}
-                onChange={(e) => handleOneLocationChange('address1', e.target.value)}
+                value={deliveryForm.address1}
+                onChange={(e) => handleDeliveryChange('address1', e.target.value)}
                 className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                 placeholder="Street address"
               />
@@ -444,8 +606,8 @@ export default function RecipientsPage() {
               </label>
               <input
                 type="text"
-                value={oneLocationForm.address2}
-                onChange={(e) => handleOneLocationChange('address2', e.target.value)}
+                value={deliveryForm.address2}
+                onChange={(e) => handleDeliveryChange('address2', e.target.value)}
                 className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                 placeholder="Suite, floor, etc. (optional)"
               />
@@ -456,8 +618,8 @@ export default function RecipientsPage() {
               </label>
               <input
                 type="text"
-                value={oneLocationForm.city}
-                onChange={(e) => handleOneLocationChange('city', e.target.value)}
+                value={deliveryForm.city}
+                onChange={(e) => handleDeliveryChange('city', e.target.value)}
                 className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                 placeholder="City"
               />
@@ -469,8 +631,8 @@ export default function RecipientsPage() {
                 </label>
                 <input
                   type="text"
-                  value={oneLocationForm.state}
-                  onChange={(e) => handleOneLocationChange('state', e.target.value.toUpperCase().slice(0, 2))}
+                  value={deliveryForm.state}
+                  onChange={(e) => handleDeliveryChange('state', e.target.value.toUpperCase().slice(0, 2))}
                   className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                   placeholder="IL"
                   maxLength={2}
@@ -482,8 +644,8 @@ export default function RecipientsPage() {
                 </label>
                 <input
                   type="text"
-                  value={oneLocationForm.zip}
-                  onChange={(e) => handleOneLocationChange('zip', e.target.value)}
+                  value={deliveryForm.zip}
+                  onChange={(e) => handleDeliveryChange('zip', e.target.value)}
                   className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                   placeholder="60601"
                 />
@@ -494,16 +656,192 @@ export default function RecipientsPage() {
                 Gift Message (optional)
               </label>
               <textarea
-                value={oneLocationForm.giftMessage}
-                onChange={(e) => handleOneLocationChange('giftMessage', e.target.value)}
+                value={deliveryForm.giftMessage}
+                onChange={(e) => handleDeliveryChange('giftMessage', e.target.value)}
                 className="w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown"
                 rows={3}
                 placeholder="Add a personalized message (max 200 characters)"
                 maxLength={200}
               />
               <p className="text-xs text-charcoal/50 mt-1">
-                {oneLocationForm.giftMessage.length}/200 characters
+                {deliveryForm.giftMessage.length}/200 characters
               </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Customer/Billing Address Form */}
+      {deliveryMethod && (
+        <Card className="mb-6 sm:mb-8 animate-fade-up">
+          <h2 className="text-base sm:text-lg font-semibold text-primary-brown mb-4 font-display">
+            Customer Information
+          </h2>
+          <p className="text-sm text-charcoal/70 mb-4">
+            Your contact and billing information
+          </p>
+
+          {/* Copy from delivery address checkbox (only for one-location) */}
+          {deliveryMethod === 'one-location' && (
+            <div className="mb-4 pb-4 border-b border-light-brown/30">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sameAsDelivery}
+                  onChange={(e) => handleSameAsDeliveryChange(e.target.checked)}
+                  className="w-5 h-5 text-primary-brown border-light-brown/30 rounded focus:ring-primary-brown/30"
+                />
+                <span className="text-sm text-charcoal/70">
+                  Same as delivery address
+                </span>
+              </label>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                value={customerForm.contactName}
+                onChange={(e) => handleCustomerChange('contactName', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                placeholder="Your full name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Company Name *
+              </label>
+              <input
+                type="text"
+                value={customerForm.companyName}
+                onChange={(e) => handleCustomerChange('companyName', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                placeholder="Your company name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                value={customerForm.phone}
+                onChange={(e) => handleCustomerChange('phone', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                } ${customerForm.phone && !isValidPhone(customerForm.phone) ? 'border-red-400' : 'border-light-brown/30'}`}
+                placeholder="(555) 555-5555"
+              />
+              {customerForm.phone && !isValidPhone(customerForm.phone) && (
+                <p className="text-xs text-red-500 mt-1">Please enter a valid phone number</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                value={customerForm.email}
+                onChange={(e) => handleCustomerChange('email', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                } ${customerForm.email && !isValidEmail(customerForm.email) ? 'border-red-400' : 'border-light-brown/30'}`}
+                placeholder="email@company.com"
+              />
+              {customerForm.email && !isValidEmail(customerForm.email) && (
+                <p className="text-xs text-red-500 mt-1">Please enter a valid email address</p>
+              )}
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Address Line 1 *
+              </label>
+              <input
+                type="text"
+                value={customerForm.address1}
+                onChange={(e) => handleCustomerChange('address1', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                placeholder="Street address"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                Address Line 2
+              </label>
+              <input
+                type="text"
+                value={customerForm.address2}
+                onChange={(e) => handleCustomerChange('address2', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                placeholder="Suite, floor, etc. (optional)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                City *
+              </label>
+              <input
+                type="text"
+                value={customerForm.city}
+                onChange={(e) => handleCustomerChange('city', e.target.value)}
+                disabled={sameAsDelivery}
+                className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                  sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                placeholder="City"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                  State *
+                </label>
+                <input
+                  type="text"
+                  value={customerForm.state}
+                  onChange={(e) => handleCustomerChange('state', e.target.value.toUpperCase().slice(0, 2))}
+                  disabled={sameAsDelivery}
+                  className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                    sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
+                  placeholder="IL"
+                  maxLength={2}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal/70 mb-1">
+                  ZIP Code *
+                </label>
+                <input
+                  type="text"
+                  value={customerForm.zip}
+                  onChange={(e) => handleCustomerChange('zip', e.target.value)}
+                  disabled={sameAsDelivery}
+                  className={`w-full px-4 py-2.5 border border-light-brown/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-brown/30 focus:border-primary-brown ${
+                    sameAsDelivery ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
+                  placeholder="60601"
+                />
+              </div>
             </div>
           </div>
         </Card>
@@ -512,7 +850,16 @@ export default function RecipientsPage() {
       {/* File Upload for Shipping Methods */}
       {isShippingMethod && (
         <div className="mb-8 animate-fade-up">
-          <CSVUploader onUpload={handleUpload} onError={setError} />
+          <CSVUploader
+            onUpload={handleUpload}
+            onError={setError}
+            onReset={() => {
+              setRecipients([]);
+              dispatch({ type: 'SET_RECIPIENTS', payload: [] });
+              setWarning(null);
+            }}
+            hasRecipients={recipients.length > 0}
+          />
           {error && (
             <Alert variant="error" className="mt-4">
               {error}
@@ -589,20 +936,25 @@ export default function RecipientsPage() {
                 <span className="pr-2">Gift Subtotal ({recipientCount} × ${giftTotal.toFixed(2)}):</span>
                 <span className="whitespace-nowrap">${pricing.giftSubtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between font-semibold text-xs sm:text-sm mt-1">
-                <span className="pr-2">Delivery Fee:</span>
-                <span className="whitespace-nowrap">${pricing.fulfillmentSubtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-xs sm:text-sm mt-1">
-                <span className="pr-2">
-                  Est. Shipping ({selectedShippingRate?.name}
-                  {deliveryMethod !== 'one-location' && ` × ${recipientCount}`}):
-                </span>
-                <span className="whitespace-nowrap">${totalShipping.toFixed(2)}</span>
-              </div>
+              {deliveryMethod === 'one-location' && (
+                <div className="flex justify-between font-semibold text-xs sm:text-sm mt-1">
+                  <span className="pr-2">
+                    Delivery Fee ({recipientCount < 500 ? '< 500' : recipientCount < 1500 ? '500-1,499' : '1,500+'} recipients):
+                  </span>
+                  <span className="whitespace-nowrap">${pricing.fulfillmentSubtotal.toFixed(2)}</span>
+                </div>
+              )}
+              {deliveryMethod !== 'one-location' && (
+                <div className="flex justify-between font-semibold text-xs sm:text-sm mt-1">
+                  <span className="pr-2">
+                    Shipping ({selectedShippingRate?.name} × {recipientCount}):
+                  </span>
+                  <span className="whitespace-nowrap">${totalShipping.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-base sm:text-lg text-primary-brown mt-3 pt-2 border-t border-light-brown/30">
                 <span>Estimated Total:</span>
-                <span className="whitespace-nowrap">${grandTotal.toFixed(2)}</span>
+                <span className="whitespace-nowrap">${(deliveryMethod === 'one-location' ? pricing.total : pricing.giftSubtotal + totalShipping).toFixed(2)}</span>
               </div>
               <p className="text-xs text-charcoal/50 mt-2">
                 * Final shipping costs will be calculated at checkout based on destination

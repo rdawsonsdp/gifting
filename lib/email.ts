@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { BuyerInfo, SelectedProduct, Recipient } from './types';
+import { BuyerInfo, SelectedProduct, Recipient, DeliveryMethod } from './types';
 
 // Email configuration - Update these in .env.local
 const EMAIL_CONFIG = {
@@ -35,12 +35,14 @@ export async function sendOrderConfirmationEmail(
   pricing: {
     giftSubtotal: number;
     fulfillmentSubtotal: number;
+    shippingCost?: number;
     total: number;
     perRecipientFee: number;
   },
   tier: string,
   excelFileBuffer?: Buffer,
-  excelFilename?: string
+  excelFilename?: string,
+  deliveryMethod?: DeliveryMethod
 ): Promise<{ success: boolean; error?: string }> {
   if (!isEmailConfigured()) {
     console.warn('Email not configured. Skipping order confirmation email.');
@@ -65,6 +67,10 @@ export async function sendOrderConfirmationEmail(
       month: 'long',
       day: 'numeric',
     });
+
+    // Check if this is a shipped order
+    const isShippedOrder = deliveryMethod && deliveryMethod.id !== 'one-location';
+    const deliveryMethodName = deliveryMethod?.name || 'One-Location Delivery';
 
     // Build product list HTML
     const productListHtml = products
@@ -125,6 +131,10 @@ export async function sendOrderConfirmationEmail(
           <td style="padding: 5px 0;">${deliveryDateFormatted}</td>
         </tr>
         <tr>
+          <td style="padding: 5px 0; font-weight: bold;">Delivery Method:</td>
+          <td style="padding: 5px 0;">${deliveryMethodName}</td>
+        </tr>
+        <tr>
           <td style="padding: 5px 0; font-weight: bold;">Number of Recipients:</td>
           <td style="padding: 5px 0;">${recipients.length}</td>
         </tr>
@@ -155,10 +165,18 @@ export async function sendOrderConfirmationEmail(
           <td style="padding: 8px 0;">Gift Subtotal:</td>
           <td style="padding: 8px 0; text-align: right;">$${pricing.giftSubtotal.toFixed(2)}</td>
         </tr>
+        ${!isShippedOrder && pricing.fulfillmentSubtotal > 0 ? `
         <tr>
-          <td style="padding: 8px 0;">Delivery Fee:</td>
+          <td style="padding: 8px 0;">Delivery Fee (${recipients.length < 500 ? '< 500' : recipients.length < 1500 ? '500-1,499' : '1,500+'} recipients):</td>
           <td style="padding: 8px 0; text-align: right;">$${pricing.fulfillmentSubtotal.toFixed(2)}</td>
         </tr>
+        ` : ''}
+        ${isShippedOrder && pricing.shippingCost ? `
+        <tr>
+          <td style="padding: 8px 0;">Shipping (${deliveryMethodName}):</td>
+          <td style="padding: 8px 0; text-align: right;">$${pricing.shippingCost.toFixed(2)}</td>
+        </tr>
+        ` : ''}
         <tr style="border-top: 2px solid #E98D3D; font-size: 18px; font-weight: bold; color: #E98D3D;">
           <td style="padding: 12px 0;">Total:</td>
           <td style="padding: 12px 0; text-align: right;">$${pricing.total.toFixed(2)}</td>
@@ -251,14 +269,16 @@ Order Number: ${orderNumber}
 Order Date: ${orderDateFormatted}
 Tier: ${tier}
 Delivery Date: ${deliveryDateFormatted}
+Delivery Method: ${deliveryMethodName}
 Number of Recipients: ${recipients.length}
 
 ORDER ITEMS
 ${products.map((sp) => `- ${sp.product.title} × ${sp.quantity} @ $${sp.product.price.toFixed(2)} = $${(sp.product.price * sp.quantity).toFixed(2)}`).join('\n')}
 
 ORDER SUMMARY
-Gift Subtotal: $${pricing.giftSubtotal.toFixed(2)}
-Delivery Fee: $${pricing.fulfillmentSubtotal.toFixed(2)}
+Gift Subtotal: $${pricing.giftSubtotal.toFixed(2)}${!isShippedOrder && pricing.fulfillmentSubtotal > 0 ? `
+Delivery Fee (${recipients.length < 500 ? '< 500' : recipients.length < 1500 ? '500-1,499' : '1,500+'} recipients): $${pricing.fulfillmentSubtotal.toFixed(2)}` : ''}${isShippedOrder && pricing.shippingCost ? `
+Shipping (${deliveryMethodName}): $${pricing.shippingCost.toFixed(2)}` : ''}
 Total: $${pricing.total.toFixed(2)}
 
 ${buyerInfo.notes ? `ORDER NOTES\n${buyerInfo.notes}\n` : ''}

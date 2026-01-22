@@ -9,11 +9,15 @@ import Alert from '@/components/ui/Alert';
 interface CSVUploaderProps {
   onUpload: (recipients: Recipient[]) => void;
   onError: (error: string) => void;
+  onReset?: () => void;
+  hasRecipients?: boolean;
+  uploadedFileName?: string;
 }
 
-export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
+export default function CSVUploader({ onUpload, onError, onReset, hasRecipients, uploadedFileName }: CSVUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(uploadedFileName || null);
 
   const isValidFileType = (fileName: string): boolean => {
     const lowerName = fileName.toLowerCase();
@@ -48,6 +52,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
       }
 
       if (data.recipients && data.recipients.length > 0) {
+        setFileName(file.name);
         onUpload(data.recipients);
       } else {
         onError('No valid recipients found in file. Please check the format.');
@@ -59,6 +64,14 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
       setUploading(false);
     }
   }, [onUpload, onError]);
+
+  const handleReset = () => {
+    setFileName(null);
+    onError('');
+    if (onReset) {
+      onReset();
+    }
+  };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -146,6 +159,32 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
         )}
       </div>
 
+      {/* Show uploaded file info and reset button */}
+      {(hasRecipients || fileName) && (
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-green-800">File uploaded successfully</p>
+                {fileName && (
+                  <p className="text-xs text-green-600">{fileName}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={handleReset}
+              className="text-sm px-3 py-1.5 bg-white border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+            >
+              Reset & Upload New File
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 sm:mt-6">
         <Button
           variant="secondary"
@@ -161,7 +200,7 @@ export default function CSVUploader({ onUpload, onError }: CSVUploaderProps) {
 
       <Alert variant="info" className="mt-3 sm:mt-4">
         <p className="text-xs sm:text-sm">
-          <strong>Required columns:</strong> first_name, last_name, address1, city, state, zip
+          <strong>Required columns:</strong> name, address1, city, state, zip
           <br />
           <strong>Optional columns:</strong> company, address2, gift_message (max 200 characters)
           <br />

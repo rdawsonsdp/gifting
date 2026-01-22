@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { GiftState, GiftAction, GiftTier, Product, Recipient, BuyerInfo } from '@/lib/types';
+import { GiftState, GiftAction, GiftTier, Product, Recipient, BuyerInfo, DeliveryMethod } from '@/lib/types';
 
 const initialState: GiftState = {
   selectedTier: null,
@@ -9,6 +9,7 @@ const initialState: GiftState = {
   selectedPackage: null,
   recipients: [],
   buyerInfo: null,
+  deliveryMethod: null,
   currentStep: 'tier',
 };
 
@@ -86,6 +87,12 @@ function giftReducer(state: GiftState, action: GiftAction): GiftState {
         ...state,
         buyerInfo: action.payload,
         currentStep: 'review',
+      };
+
+    case 'SET_DELIVERY_METHOD':
+      return {
+        ...state,
+        deliveryMethod: action.payload,
       };
 
     case 'SET_STEP':

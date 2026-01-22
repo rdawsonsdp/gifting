@@ -1,5 +1,6 @@
-import { SelectedProduct } from '@/lib/types';
+import { SelectedProduct, DeliveryMethod } from '@/lib/types';
 import Card from '@/components/ui/Card';
+import { DELIVERY_TIERS, DeliveryTier } from '@/lib/pricing';
 
 interface OrderSummaryProps {
   giftContents: SelectedProduct[];
@@ -9,18 +10,38 @@ interface OrderSummaryProps {
     fulfillmentSubtotal: number;
     total: number;
     perRecipientFee: number;
+    shippingPerRecipient?: number;
+    deliveryTier?: DeliveryTier;
+    deliveryTierLabel?: string;
   };
+  deliveryMethod?: DeliveryMethod | null;
 }
 
 export default function OrderSummary({
   giftContents,
   recipientCount,
   pricing,
+  deliveryMethod,
 }: OrderSummaryProps) {
   const giftTotal = giftContents.reduce(
     (sum, sp) => sum + sp.product.price * sp.quantity,
     0
   );
+
+  // Calculate shipping cost for shipped orders (not one-location)
+  const isShippedOrder = deliveryMethod && deliveryMethod.id !== 'one-location';
+  const isDeliveryOrder = !deliveryMethod || deliveryMethod.id === 'one-location';
+  const shippingCostPerRecipient = isShippedOrder ? deliveryMethod.price : 0;
+  const totalShippingCost = shippingCostPerRecipient * recipientCount;
+
+  // Delivery fee only applies to one-location delivery, not shipped orders
+  const deliveryFee = isDeliveryOrder ? pricing.fulfillmentSubtotal : 0;
+  const grandTotal = pricing.giftSubtotal + deliveryFee + totalShippingCost;
+
+  // Get delivery tier label for display
+  const deliveryTierDisplay = pricing.deliveryTier
+    ? `${recipientCount < 500 ? '< 500' : recipientCount < 1500 ? '500-1,499' : '1,500+'} recipients`
+    : '';
 
   return (
     <Card>
@@ -59,10 +80,18 @@ export default function OrderSummary({
           <span className="pr-2">Gift Subtotal ({recipientCount} × ${giftTotal.toFixed(2)}):</span>
           <span className="whitespace-nowrap">${pricing.giftSubtotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="pr-2">Delivery Fee:</span>
-          <span className="whitespace-nowrap">${pricing.fulfillmentSubtotal.toFixed(2)}</span>
-        </div>
+        {isDeliveryOrder && (
+          <div className="flex justify-between">
+            <span className="pr-2">Delivery Fee ({deliveryTierDisplay}):</span>
+            <span className="whitespace-nowrap">${deliveryFee.toFixed(2)}</span>
+          </div>
+        )}
+        {isShippedOrder && (
+          <div className="flex justify-between">
+            <span className="pr-2">Shipping ({deliveryMethod.name} × {recipientCount}):</span>
+            <span className="whitespace-nowrap">${totalShippingCost.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-[#8B7355] text-xs mt-2">
           <span>Tax:</span>
           <span className="whitespace-nowrap">TBD (calculated at checkout)</span>
@@ -70,7 +99,7 @@ export default function OrderSummary({
         <div className="border-t border-[#8B7355]/30 pt-3 mt-3">
           <div className="flex justify-between font-bold text-base sm:text-lg text-[#E98D3D]">
             <span>Total:</span>
-            <span className="whitespace-nowrap">${pricing.total.toFixed(2)}</span>
+            <span className="whitespace-nowrap">${grandTotal.toFixed(2)}</span>
           </div>
         </div>
       </div>

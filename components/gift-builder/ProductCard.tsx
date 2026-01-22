@@ -40,14 +40,6 @@ export default function ProductCard({
               </svg>
             </div>
           )}
-          {/* Badge overlay for low stock */}
-          {product.inventory < 10 && (
-            <div className="absolute top-2 right-2">
-              <span className="px-2 py-1 bg-error-red/90 text-white rounded-full text-xs font-bold backdrop-blur-sm">
-                Low Stock
-              </span>
-            </div>
-          )}
         </div>
         
         <h3 className="font-display font-semibold text-primary-brown mb-2 text-sm sm:text-base line-clamp-2">{product.title}</h3>

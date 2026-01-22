@@ -12,8 +12,7 @@ const US_STATES = [
 
 // Zod schema for recipient validation
 export const recipientSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
+  name: z.string().min(1, 'Name is required'),
   company: z.string().optional(),
   address1: z.string().min(1, 'Address is required'),
   address2: z.string().optional(),
@@ -28,16 +27,45 @@ export const recipientSchema = z.object({
 
 export type RecipientRow = z.infer<typeof recipientSchema>;
 
+/**
+ * Split a full name into first and last name
+ */
+function splitName(fullName: string): { firstName: string; lastName: string } {
+  const trimmed = fullName.trim();
+  const parts = trimmed.split(/\s+/);
+
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: '' };
+  }
+
+  // First word is first name, rest is last name
+  const firstName = parts[0];
+  const lastName = parts.slice(1).join(' ');
+
+  return { firstName, lastName };
+}
+
 export function validateRecipient(row: Record<string, string>): {
   recipient: Recipient | null;
   errors: string[];
 } {
   const errors: string[] = [];
-  
+
   try {
+    // Support both "name" field and legacy "first_name"/"last_name" fields
+    let nameValue = row.name || row['Name'] || '';
+
+    // Fallback to first_name + last_name if name is not provided (backwards compatibility)
+    if (!nameValue) {
+      const firstName = row.first_name || row['First Name'] || '';
+      const lastName = row.last_name || row['Last Name'] || '';
+      if (firstName || lastName) {
+        nameValue = `${firstName} ${lastName}`.trim();
+      }
+    }
+
     const validated = recipientSchema.parse({
-      first_name: row.first_name || row['First Name'] || '',
-      last_name: row.last_name || row['Last Name'] || '',
+      name: nameValue,
       company: row.company || row['Company'] || '',
       address1: row.address1 || row['Address 1'] || row.address || '',
       address2: row.address2 || row['Address 2'] || '',
@@ -47,10 +75,13 @@ export function validateRecipient(row: Record<string, string>): {
       gift_message: row.gift_message || row['Gift Message'] || '',
     });
 
+    // Split the name into first and last name
+    const { firstName, lastName } = splitName(validated.name);
+
     const recipient: Recipient = {
       id: Math.random().toString(36).substr(2, 9),
-      firstName: validated.first_name,
-      lastName: validated.last_name,
+      firstName,
+      lastName,
       company: validated.company || undefined,
       address1: validated.address1,
       address2: validated.address2 || undefined,

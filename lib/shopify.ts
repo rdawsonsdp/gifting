@@ -76,6 +76,9 @@ export async function fetchGiftProducts(): Promise<Product[]> {
                 }
               }
               tags
+              shippingCost: metafield(namespace: "custom", key: "shipping_cost") {
+                value
+              }
             }
           }
         }
@@ -106,6 +109,7 @@ export async function fetchGiftProducts(): Promise<Product[]> {
                 }>;
               };
               tags: string[];
+              shippingCost: { value: string } | null;
             };
           }>;
         };
@@ -123,6 +127,12 @@ export async function fetchGiftProducts(): Promise<Product[]> {
 
     return data.collectionByHandle.products.edges.map(({ node }) => {
       const variant = node.variants.edges[0]?.node;
+      // Parse shipping cost from metafield (stored as JSON number or string)
+      let shippingCost: number | undefined;
+      if (node.shippingCost?.value) {
+        const parsed = parseFloat(node.shippingCost.value);
+        shippingCost = isNaN(parsed) ? undefined : parsed;
+      }
       return {
         id: node.id.split('/').pop() || '',
         title: node.title,
@@ -133,6 +143,7 @@ export async function fetchGiftProducts(): Promise<Product[]> {
         inventory: variant?.inventoryQuantity || 0,
         variantId: variant?.id.split('/').pop() || undefined,
         slug: node.handle,
+        shippingCost,
       };
     });
   } catch (error) {
@@ -171,6 +182,9 @@ export async function fetchGiftPackages(): Promise<Product[]> {
                 }
               }
               tags
+              shippingCost: metafield(namespace: "custom", key: "shipping_cost") {
+                value
+              }
             }
           }
         }
@@ -201,6 +215,7 @@ export async function fetchGiftPackages(): Promise<Product[]> {
                 }>;
               };
               tags: string[];
+              shippingCost: { value: string } | null;
             };
           }>;
         };
@@ -216,6 +231,12 @@ export async function fetchGiftPackages(): Promise<Product[]> {
 
     return data.collectionByHandle.products.edges.map(({ node }) => {
       const variant = node.variants.edges[0]?.node;
+      // Parse shipping cost from metafield
+      let shippingCost: number | undefined;
+      if (node.shippingCost?.value) {
+        const parsed = parseFloat(node.shippingCost.value);
+        shippingCost = isNaN(parsed) ? undefined : parsed;
+      }
       return {
         id: node.id.split('/').pop() || '',
         title: node.title,
@@ -226,6 +247,7 @@ export async function fetchGiftPackages(): Promise<Product[]> {
         inventory: variant?.inventoryQuantity || 0,
         variantId: variant?.id.split('/').pop() || undefined,
         slug: node.handle,
+        shippingCost,
       };
     });
   } catch (error) {
@@ -267,6 +289,9 @@ export async function fetchProductByHandle(handle: string): Promise<Product | nu
           }
         }
         tags
+        shippingCost: metafield(namespace: "custom", key: "shipping_cost") {
+          value
+        }
       }
     }
   `;
@@ -298,6 +323,7 @@ export async function fetchProductByHandle(handle: string): Promise<Product | nu
           }>;
         };
         tags: string[];
+        shippingCost: { value: string } | null;
       } | null;
     }>(query, { handle });
 
@@ -308,6 +334,13 @@ export async function fetchProductByHandle(handle: string): Promise<Product | nu
 
     const node = data.productByHandle;
     const variant = node.variants.edges[0]?.node;
+
+    // Parse shipping cost from metafield
+    let shippingCost: number | undefined;
+    if (node.shippingCost?.value) {
+      const parsed = parseFloat(node.shippingCost.value);
+      shippingCost = isNaN(parsed) ? undefined : parsed;
+    }
 
     return {
       id: node.id.split('/').pop() || '',
@@ -321,6 +354,7 @@ export async function fetchProductByHandle(handle: string): Promise<Product | nu
       slug: node.handle,
       descriptionHtml: node.descriptionHtml,
       images: node.images.edges.map(edge => edge.node.url),
+      shippingCost,
     } as Product & { descriptionHtml?: string; images?: string[] };
   } catch (error) {
     console.error('Error fetching product by handle:', error);
@@ -358,6 +392,9 @@ export async function fetchSpecialOfferProducts(): Promise<Product[]> {
                 }
               }
               tags
+              shippingCost: metafield(namespace: "custom", key: "shipping_cost") {
+                value
+              }
             }
           }
         }
@@ -388,6 +425,7 @@ export async function fetchSpecialOfferProducts(): Promise<Product[]> {
                 }>;
               };
               tags: string[];
+              shippingCost: { value: string } | null;
             };
           }>;
         };
@@ -409,6 +447,12 @@ export async function fetchSpecialOfferProducts(): Promise<Product[]> {
 
     return data.collectionByHandle.products.edges.map(({ node }) => {
       const variant = node.variants.edges[0]?.node;
+      // Parse shipping cost from metafield
+      let shippingCost: number | undefined;
+      if (node.shippingCost?.value) {
+        const parsed = parseFloat(node.shippingCost.value);
+        shippingCost = isNaN(parsed) ? undefined : parsed;
+      }
       return {
         id: node.id.split('/').pop() || '',
         title: node.title,
@@ -419,6 +463,7 @@ export async function fetchSpecialOfferProducts(): Promise<Product[]> {
         inventory: variant?.inventoryQuantity || 0,
         variantId: variant?.id.split('/').pop() || undefined,
         compareAtPrice: variant?.compareAtPrice ? parseFloat(variant.compareAtPrice) : undefined,
+        shippingCost,
       };
     });
   } catch (error) {
@@ -847,4 +892,80 @@ export async function uploadFileToShopify(
  */
 export function getFileBase64(fileBuffer: Buffer): string {
   return fileBuffer.toString('base64');
+}
+
+/**
+ * Send draft order invoice to customer for payment
+ * This sends the Shopify draft order invoice email to the customer
+ */
+export async function sendDraftOrderInvoice(
+  draftOrderId: string,
+  toEmail?: string,
+  subject?: string,
+  customMessage?: string
+): Promise<{ success: boolean; error?: string }> {
+  const mutation = `
+    mutation draftOrderInvoiceSend($id: ID!, $email: EmailInput) {
+      draftOrderInvoiceSend(id: $id, email: $email) {
+        draftOrder {
+          id
+          invoiceUrl
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  // Handle both GID format and plain ID format
+  const orderId = draftOrderId.startsWith('gid://')
+    ? draftOrderId
+    : `gid://shopify/DraftOrder/${draftOrderId}`;
+
+  // Build email input if custom values provided
+  const emailInput = toEmail || subject || customMessage ? {
+    to: toEmail,
+    subject: subject || 'Invoice from Brown Sugar Bakery - Corporate Gifting',
+    customMessage: customMessage || 'Thank you for your corporate gifting order! Please review the attached invoice and complete your payment.',
+  } : undefined;
+
+  const variables: {
+    id: string;
+    email?: {
+      to?: string;
+      subject?: string;
+      customMessage?: string;
+    };
+  } = {
+    id: orderId,
+    ...(emailInput && { email: emailInput }),
+  };
+
+  try {
+    console.log('Sending draft order invoice:', { draftOrderId, toEmail });
+
+    const data = await shopifyRequest<{
+      draftOrderInvoiceSend: {
+        draftOrder: { id: string; invoiceUrl: string } | null;
+        userErrors: Array<{ field: string[]; message: string }>;
+      };
+    }>(mutation, variables);
+
+    if (data.draftOrderInvoiceSend.userErrors.length > 0) {
+      const errorMessage = data.draftOrderInvoiceSend.userErrors
+        .map((e) => e.message)
+        .join(', ');
+      console.error('Error sending draft order invoice:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
+
+    console.log('✅ Draft order invoice sent successfully');
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error sending draft order invoice:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
 }

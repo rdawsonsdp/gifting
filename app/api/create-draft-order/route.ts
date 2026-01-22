@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDraftOrder, updateDraftOrderCustomAttributes, appendExcelUrlToDraftOrderNote } from '@/lib/shopify';
+import { createDraftOrder, updateDraftOrderCustomAttributes, appendExcelUrlToDraftOrderNote, sendDraftOrderInvoice } from '@/lib/shopify';
 import { generateRecipientExcel } from '@/lib/excel-generator';
 import { saveExcelFile, getExcelFileUrl } from '@/lib/file-storage';
 import { sendOrderConfirmationEmail } from '@/lib/email';
-import { SelectedProduct, Recipient, BuyerInfo } from '@/lib/types';
+import { sendInvoiceSms } from '@/lib/sms';
+import { SelectedProduct, Recipient, BuyerInfo, DeliveryMethod } from '@/lib/types';
 import { calculateOrderTotal } from '@/lib/pricing';
 
 interface RequestBody {
@@ -14,13 +15,14 @@ interface RequestBody {
     fulfillmentSubtotal: number;
     perRecipientFee: number;
   };
+  deliveryMethod?: DeliveryMethod;
   tier?: string; // Optional tier name for Excel
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: RequestBody = await request.json();
-    const { products, recipients, buyerInfo, pricing, tier } = body;
+    const { products, recipients, buyerInfo, pricing, deliveryMethod, tier } = body;
 
     if (!products || products.length === 0) {
       return NextResponse.json(
@@ -63,7 +65,18 @@ export async function POST(request: NextRequest) {
       (sum, sp) => sum + sp.product.price * sp.quantity,
       0
     );
-    const orderPricing = calculateOrderTotal(giftTotal, recipients.length);
+    // Calculate order pricing (includes 15% delivery fee)
+    const orderPricing = calculateOrderTotal(giftTotal, recipients.length, products);
+
+    // Calculate shipping cost for shipped orders (not one-location)
+    const isShippedOrder = deliveryMethod && deliveryMethod.id !== 'one-location';
+    const isDeliveryOrder = !deliveryMethod || deliveryMethod.id === 'one-location';
+    const shippingCostPerRecipient = isShippedOrder ? deliveryMethod.price : 0;
+    const totalShippingCost = shippingCostPerRecipient * recipients.length;
+
+    // Delivery fee only applies to one-location delivery, not shipped orders
+    const deliveryFee = isDeliveryOrder ? orderPricing.fulfillmentSubtotal : 0;
+    const grandTotal = orderPricing.giftSubtotal + deliveryFee + totalShippingCost;
 
     // Step 1: Create draft order first to get order number
     const result = await createDraftOrder(
@@ -88,11 +101,13 @@ export async function POST(request: NextRequest) {
         recipients,
         pricing: {
           giftSubtotal: orderPricing.giftSubtotal,
-          fulfillmentSubtotal: orderPricing.fulfillmentSubtotal,
-          total: orderPricing.total,
+          fulfillmentSubtotal: deliveryFee,
+          shippingCost: totalShippingCost,
+          total: grandTotal,
           perRecipientFee: orderPricing.perRecipientFee,
         },
         tier: tier || 'Unknown',
+        deliveryMethod: deliveryMethod || undefined,
       });
       console.log('Excel generated successfully, size:', excelBuffer.length, 'bytes');
 
@@ -156,13 +171,15 @@ export async function POST(request: NextRequest) {
         recipients,
         {
           giftSubtotal: orderPricing.giftSubtotal,
-          fulfillmentSubtotal: orderPricing.fulfillmentSubtotal,
-          total: orderPricing.total,
+          fulfillmentSubtotal: deliveryFee,
+          shippingCost: totalShippingCost,
+          total: grandTotal,
           perRecipientFee: orderPricing.perRecipientFee,
         },
         tier || 'Unknown',
         excelBufferForEmail,
-        excelFilenameForEmail
+        excelFilenameForEmail,
+        deliveryMethod
       );
       
       if (emailResult.success) {
@@ -178,9 +195,77 @@ export async function POST(request: NextRequest) {
       // Continue - order is already created, email failure shouldn't block success
     }
 
-    // If Excel was uploaded, update the draft order with the Excel URL
-    // For now, we'll return it in the response - it's already in customAttributes
-    // In a future update, we could use draftOrderUpdate mutation to add it to notes
+    // Step 6: Send Shopify draft order invoice to customer for payment
+    let invoiceSent = false;
+    let invoiceError: string | null = null;
+    try {
+      console.log('Sending Shopify draft order invoice to:', buyerInfo.email);
+
+      // Build subject with order number and customer name
+      const invoiceSubject = `Corporate Gifting Order ${result.draftOrderNumber} - ${buyerInfo.name}`;
+
+      // Build custom message with order details and customer notes
+      let customMessage = `Dear ${buyerInfo.name},\n\nThank you for your corporate gifting order with Brown Sugar Bakery!\n\nOrder Details:\n- Order Number: ${result.draftOrderNumber}\n- Company: ${buyerInfo.company}\n- Delivery Date: ${buyerInfo.deliveryDate ? new Date(buyerInfo.deliveryDate).toLocaleDateString() : 'To be confirmed'}\n- Delivery Method: ${deliveryMethod?.name || 'One-Location Delivery'}\n- Total Recipients: ${recipients.length}`;
+
+      if (isShippedOrder) {
+        customMessage += `\n- Shipping Cost: $${totalShippingCost.toFixed(2)} (${deliveryMethod.name} × ${recipients.length} recipients)`;
+      }
+
+      // Add customer notes if present
+      if (buyerInfo.notes) {
+        customMessage += `\n\nCustomer Notes:\n${buyerInfo.notes}`;
+      }
+
+      customMessage += '\n\nPlease review the invoice below and click the payment link to complete your purchase.\n\nWe look forward to helping you share the sweetness!\n\n- The Brown Sugar Bakery Team';
+
+      const invoiceResult = await sendDraftOrderInvoice(
+        result.draftOrderId,
+        buyerInfo.email,
+        invoiceSubject,
+        customMessage
+      );
+
+      if (invoiceResult.success) {
+        invoiceSent = true;
+        console.log('Shopify draft order invoice sent successfully');
+      } else {
+        invoiceError = invoiceResult.error || 'Unknown error';
+        console.warn('Failed to send Shopify draft order invoice:', invoiceError);
+      }
+    } catch (err) {
+      invoiceError = err instanceof Error ? err.message : String(err);
+      console.error('Error sending Shopify draft order invoice:', err);
+      // Continue - order is already created
+    }
+
+    // Step 7: Send SMS notification if customer opted in - DISABLED FOR NOW
+    let smsSent = false;
+    let smsError: string | null = null;
+    /*
+    if (buyerInfo.notifyByText && buyerInfo.phone) {
+      try {
+        console.log('Sending SMS notification to:', buyerInfo.phone);
+        const smsResult = await sendInvoiceSms(
+          buyerInfo.phone,
+          buyerInfo.name,
+          result.draftOrderNumber,
+          result.invoiceUrl
+        );
+
+        if (smsResult.success) {
+          smsSent = true;
+          console.log('SMS notification sent successfully');
+        } else {
+          smsError = smsResult.error || 'Unknown error';
+          console.warn('Failed to send SMS notification:', smsError);
+        }
+      } catch (err) {
+        smsError = err instanceof Error ? err.message : String(err);
+        console.error('Error sending SMS notification:', err);
+        // Continue - order is already created
+      }
+    }
+    */
 
     return NextResponse.json({
       success: true,
@@ -191,6 +276,10 @@ export async function POST(request: NextRequest) {
       excelError: excelError || null,
       emailSent: emailSent,
       emailError: emailError || null,
+      invoiceSent: invoiceSent,
+      invoiceError: invoiceError || null,
+      smsSent: smsSent,
+      smsError: smsError || null,
       message: 'Order submitted successfully. You will receive an invoice shortly.',
     });
   } catch (error) {

@@ -24,6 +24,7 @@ const buyerSchema = z.object({
     { message: 'Delivery date must be today or in the future' }
   ),
   notes: z.string().optional(),
+  notifyByText: z.boolean().optional(),
 });
 
 type BuyerFormData = z.infer<typeof buyerSchema>;
@@ -45,6 +46,7 @@ export default function BuyerForm({ onSubmit, initialData, onValidationCheck }: 
     company: initialData?.company ? String(initialData.company) : '',
     deliveryDate: initialData?.deliveryDate ? String(initialData.deliveryDate) : '',
     notes: initialData?.notes ? String(initialData.notes) : '',
+    notifyByText: initialData?.notifyByText ?? false,
   };
 
   const {
@@ -141,6 +143,7 @@ export default function BuyerForm({ onSubmit, initialData, onValidationCheck }: 
       company: data.company || '',
       deliveryDate: deliveryDateValue,
       notes: data.notes || undefined,
+      notifyByText: data.notifyByText || false,
     };
     
     console.log('Form submitted with buyerInfo:', buyerInfo);
@@ -278,7 +281,27 @@ export default function BuyerForm({ onSubmit, initialData, onValidationCheck }: 
             </p>
           )}
         </div>
-        
+
+        {/* Text Notification Opt-in - DISABLED FOR NOW
+        <div className="bg-[#FFF8F0] border border-[#E98D3D]/30 rounded-lg p-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              {...register('notifyByText')}
+              className="mt-1 w-5 h-5 text-[#E98D3D] border-[#8B7355]/30 rounded focus:ring-[#E98D3D]/30 cursor-pointer"
+            />
+            <div>
+              <span className="text-sm font-semibold text-[#333333]">
+                Notify me by text message
+              </span>
+              <p className="text-xs text-[#8B7355] mt-1">
+                Receive a text message with your invoice link for easy payment. Standard messaging rates may apply.
+              </p>
+            </div>
+          </label>
+        </div>
+        */}
+
         <div className="pt-2">
           <button 
             type="submit" 

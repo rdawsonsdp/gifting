@@ -24,9 +24,13 @@ export default function ReviewPage() {
   const [orderData, setOrderData] = useState<{ orderId: string; orderNumber: string } | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
 
-  const giftTotal = getCurrentTotal();
+  // Calculate gift total based on package or custom build
+  const giftTotal = state.selectedPackage
+    ? state.selectedPackage.price
+    : getCurrentTotal();
   const recipientCount = state.recipients.length;
-  const pricing = calculateOrderTotal(giftTotal, recipientCount);
+  // Pass products for per-item shipping calculation
+  const pricing = calculateOrderTotal(giftTotal, recipientCount, state.selectedProducts);
 
   const handleBuyerSubmit = (data: BuyerInfo) => {
     dispatch({ type: 'SET_BUYER_INFO', payload: data });
@@ -46,8 +50,8 @@ export default function ReviewPage() {
       return;
     }
 
-    // Basic validation
-    if (state.selectedProducts.length === 0) {
+    // Basic validation - check for package or products
+    if (!state.selectedPackage && state.selectedProducts.length === 0) {
       setError('No products selected');
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -162,6 +166,7 @@ export default function ReviewPage() {
             fulfillmentSubtotal: pricing.fulfillmentSubtotal,
             perRecipientFee: pricing.perRecipientFee,
           },
+          deliveryMethod: state.deliveryMethod,
           tier: state.selectedTier?.name || 'Unknown',
         }),
       });
@@ -190,11 +195,14 @@ export default function ReviewPage() {
     }
   };
 
-  if (!state.selectedTier || state.selectedProducts.length === 0) {
+  // Check if we have a valid order (either package or tier with products)
+  const hasValidOrder = state.selectedPackage || (state.selectedTier && state.selectedProducts.length > 0);
+
+  if (!hasValidOrder) {
     return (
       <div className="container mx-auto px-4 py-12">
         <Alert variant="error">
-          Please select a tier and build your gift first.
+          Please select a package or build your gift first.
         </Alert>
         <Button onClick={() => router.push('/')} className="mt-4">
           Go to Home
@@ -243,6 +251,7 @@ export default function ReviewPage() {
             giftContents={state.selectedProducts}
             recipientCount={recipientCount}
             pricing={pricing}
+            deliveryMethod={state.deliveryMethod}
           />
         </div>
 
@@ -310,11 +319,24 @@ export default function ReviewPage() {
         <div className="text-center">
           <div className="text-4xl sm:text-5xl mb-4">✓</div>
           <p className="text-base sm:text-lg text-[#333333] mb-2 font-semibold">
-            Your Corporate Gifting Order is Complete.
+            Thank You for Your Order!
           </p>
-          <p className="text-sm sm:text-base text-[#8B7355]">
-            A member of Our Brown Sugar Bakery Staff will Contact you for Payment and Order Confirmation.
+          <p className="text-sm sm:text-base text-[#8B7355] mb-4">
+            Your invoice has been sent to your email address. Please check your inbox for payment details and order confirmation.
           </p>
+          <div className="bg-[#FFF8F0] border border-[#E98D3D]/30 rounded-lg p-4 mt-4">
+            <p className="text-sm text-[#333333] font-medium mb-2">
+              Questions? We're here to help!
+            </p>
+            <p className="text-sm text-[#8B7355]">
+              <span className="font-semibold">Phone:</span>{' '}
+              <a href="tel:773-570-7676" className="text-[#E98D3D] hover:underline">773-570-7676</a>
+            </p>
+            <p className="text-sm text-[#8B7355]">
+              <span className="font-semibold">Email:</span>{' '}
+              <a href="mailto:brownsugarbakery75@gmail.com" className="text-[#E98D3D] hover:underline">brownsugarbakery75@gmail.com</a>
+            </p>
+          </div>
         </div>
       </Modal>
 

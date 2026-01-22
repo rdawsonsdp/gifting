@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { SelectedProduct, Recipient, BuyerInfo } from './types';
+import { SelectedProduct, Recipient, BuyerInfo, DeliveryMethod } from './types';
 
 export interface OrderData {
   draftOrderNumber: string;
@@ -9,15 +9,17 @@ export interface OrderData {
   pricing: {
     giftSubtotal: number;
     fulfillmentSubtotal: number;
+    shippingCost?: number;
     total: number;
     perRecipientFee: number;
   };
   tier: string;
+  deliveryMethod?: DeliveryMethod;
 }
 
 export async function generateRecipientExcel(orderData: OrderData): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  const { draftOrderNumber, buyerInfo, products, recipients, pricing, tier } = orderData;
+  const { draftOrderNumber, buyerInfo, products, recipients, pricing, tier, deliveryMethod } = orderData;
 
   // Sheet 1: Order Summary
   const summarySheet = workbook.addWorksheet('Order Summary');
@@ -44,24 +46,29 @@ export async function generateRecipientExcel(orderData: OrderData): Promise<Buff
       })
     : 'Not specified';
 
+  // Check if this is a shipped order
+  const isShippedOrder = deliveryMethod && deliveryMethod.id !== 'one-location';
+
   // Add order summary data
   const summaryData = [
     { field: 'Order Number', value: draftOrderNumber },
-    { field: 'Order Date', value: new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    { field: 'Order Date', value: new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     }) },
     { field: 'Buyer Name', value: buyerInfo.name },
     { field: 'Buyer Company', value: buyerInfo.company },
     { field: 'Buyer Email', value: buyerInfo.email },
     { field: 'Buyer Phone', value: buyerInfo.phone },
     { field: 'Delivery Date', value: deliveryDateFormatted },
+    { field: 'Delivery Method', value: deliveryMethod?.name || 'One-Location Delivery' },
     ...(buyerInfo.notes ? [{ field: 'Order Notes', value: buyerInfo.notes }] : []),
     { field: 'Tier', value: tier },
     { field: 'Total Recipients', value: recipients.length.toString() },
     { field: 'Gift Subtotal', value: `$${pricing.giftSubtotal.toFixed(2)}` },
-    { field: 'Fulfillment Fee', value: `$${pricing.fulfillmentSubtotal.toFixed(2)}` },
+    ...(!isShippedOrder && pricing.fulfillmentSubtotal > 0 ? [{ field: `Delivery Fee (${recipients.length < 500 ? '< 500' : recipients.length < 1500 ? '500-1,499' : '1,500+'} recipients)`, value: `$${pricing.fulfillmentSubtotal.toFixed(2)}` }] : []),
+    ...(isShippedOrder && pricing.shippingCost ? [{ field: `Shipping (${deliveryMethod.name})`, value: `$${pricing.shippingCost.toFixed(2)}` }] : []),
     { field: 'Order Total', value: `$${pricing.total.toFixed(2)}` },
   ];
 

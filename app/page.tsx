@@ -8,6 +8,7 @@ import TierCard from '@/components/gift-builder/TierCard';
 import PackageCard from '@/components/gift-builder/PackageCard';
 import HeroCarousel from '@/components/layout/HeroCarousel';
 import ProductCarousel from '@/components/gift-builder/ProductCarousel';
+import LogoBanner from '@/components/layout/LogoBanner';
 import SpecialOfferPopup from '@/components/ui/SpecialOfferPopup';
 
 // Helper function to extract Vimeo video ID from URL
@@ -198,18 +199,8 @@ export default function Home() {
       {/* Product Carousel */}
       <ProductCarousel autoScroll={true} scrollInterval={4000} />
 
-      {/* Call to Action with Enhanced Styling */}
-      <div className="relative text-center mt-8 sm:mt-12 lg:mt-16">
-        <div className="glass-card rounded-2xl p-6 sm:p-8 lg:p-12 mx-2 sm:mx-0 max-w-3xl mx-auto animate-fade-up">
-          <p className="text-lg sm:text-xl md:text-2xl font-display font-bold text-primary-brown mb-3 sm:mb-4 px-2">
-            Your clients deserve something special.<br />
-            Build custom gifts within your budget.
-          </p>
-          <p className="text-sm sm:text-base text-light-brown px-2">
-            Life is Sweeter with Brown Sugar Bakery
-          </p>
-        </div>
-      </div>
+      {/* Logo Banner - Trusted Companies */}
+      <LogoBanner />
       </div>
 
       {/* Volume Pricing Popup */}

@@ -19,6 +19,8 @@ export interface Product {
   variantId?: string; // Shopify variant ID
   compareAtPrice?: number; // Original price before discount
   slug?: string; // Shopify product handle
+  shippingCost?: number; // Per-item shipping cost from Shopify
+  weight?: number; // Product weight in grams
 }
 
 export interface Recipient {
@@ -31,6 +33,8 @@ export interface Recipient {
   city: string;
   state: string;
   zip: string;
+  phone?: string;
+  email?: string;
   giftMessage?: string;
   isValid: boolean;
   errors: string[];
@@ -43,6 +47,7 @@ export interface BuyerInfo {
   company: string;
   deliveryDate: string;
   notes?: string;
+  notifyByText?: boolean;
 }
 
 export interface SelectedProduct {
@@ -62,12 +67,20 @@ export interface SelectedPackage {
   quantity: number;
 }
 
+export interface DeliveryMethod {
+  id: 'one-location' | 'usps' | 'ups-ground' | 'ups-2day';
+  name: string;
+  price: number;
+  estimatedDays?: string;
+}
+
 export interface GiftState {
   selectedTier: GiftTier | null;
   selectedProducts: SelectedProduct[];
   selectedPackage: SelectedPackage | null;
   recipients: Recipient[];
   buyerInfo: BuyerInfo | null;
+  deliveryMethod: DeliveryMethod | null;
   currentStep: 'tier' | 'build' | 'package' | 'recipients' | 'review' | 'confirmation';
 }
 
@@ -79,5 +92,6 @@ export type GiftAction =
   | { type: 'SELECT_PACKAGE'; payload: { package: Omit<SelectedPackage, 'quantity'>; quantity: number } }
   | { type: 'SET_RECIPIENTS'; payload: Recipient[] }
   | { type: 'SET_BUYER_INFO'; payload: BuyerInfo }
+  | { type: 'SET_DELIVERY_METHOD'; payload: DeliveryMethod }
   | { type: 'SET_STEP'; payload: GiftState['currentStep'] }
   | { type: 'RESET' };
