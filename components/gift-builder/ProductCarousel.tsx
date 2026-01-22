@@ -1,8 +1,7 @@
 'use client';
 
-'use client';
-
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
 
 interface ProductCarouselProps {
@@ -10,10 +9,11 @@ interface ProductCarouselProps {
   scrollInterval?: number;
 }
 
-export default function ProductCarousel({ 
-  autoScroll = true, 
-  scrollInterval = 3000 
+export default function ProductCarousel({
+  autoScroll = true,
+  scrollInterval = 3000
 }: ProductCarouselProps) {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -155,7 +155,10 @@ export default function ProductCarousel({
                 className="flex-shrink-0 w-64 sm:w-72 lg:w-80 snap-start"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="glass-card rounded-2xl overflow-hidden hover-lift h-full flex flex-col group">
+                <div
+                  className="glass-card rounded-2xl overflow-hidden hover-lift h-full flex flex-col group cursor-pointer"
+                  onClick={() => router.push(`/product/${product.slug || product.id}`)}
+                >
                   {/* Product Image */}
                   <div className="aspect-square bg-gradient-to-br from-cream to-lavender/30 overflow-hidden relative">
                     {product.image ? (

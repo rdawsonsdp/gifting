@@ -62,6 +62,7 @@ export async function fetchGiftProducts(): Promise<Product[]> {
               id
               title
               description
+              handle
               featuredImage {
                 url
               }
@@ -93,6 +94,7 @@ export async function fetchGiftProducts(): Promise<Product[]> {
               id: string;
               title: string;
               description: string;
+              handle: string;
               featuredImage: { url: string } | null;
               variants: {
                 edges: Array<{
@@ -130,6 +132,7 @@ export async function fetchGiftProducts(): Promise<Product[]> {
         availableForTiers: node.tags.filter(tag => ['bronze', 'silver', 'gold', 'platinum'].includes(tag.toLowerCase())),
         inventory: variant?.inventoryQuantity || 0,
         variantId: variant?.id.split('/').pop() || undefined,
+        slug: node.handle,
       };
     });
   } catch (error) {
