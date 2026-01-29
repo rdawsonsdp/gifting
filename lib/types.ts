@@ -65,13 +65,15 @@ export interface SelectedPackage {
   image: string;
   includes: string[];
   quantity: number;
+  variantId?: string; // Shopify variant ID for creating orders
 }
 
 export interface DeliveryMethod {
-  id: 'one-location' | 'usps' | 'ups-ground' | 'ups-2day';
+  id: 'factory-pickup' | 'individual' | 'local-delivery' | 'heavy-order';
   name: string;
   price: number;
   estimatedDays?: string;
+  shippingMethod?: 'ups-ground' | 'ups-2day' | 'local';
 }
 
 export interface GiftState {
@@ -81,7 +83,17 @@ export interface GiftState {
   recipients: Recipient[];
   buyerInfo: BuyerInfo | null;
   deliveryMethod: DeliveryMethod | null;
-  currentStep: 'tier' | 'build' | 'package' | 'recipients' | 'review' | 'confirmation';
+  currentStep: 'tier' | 'build' | 'package' | 'promotional' | 'recipients' | 'review' | 'confirmation';
+  plannedRecipientCount: number;
+  appliedDiscount: AppliedDiscount | null;
+}
+
+export interface AppliedDiscount {
+  code: string;
+  title: string;
+  valueType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  value: number;
+  discountAmount: number;
 }
 
 export type GiftAction =
@@ -94,4 +106,8 @@ export type GiftAction =
   | { type: 'SET_BUYER_INFO'; payload: BuyerInfo }
   | { type: 'SET_DELIVERY_METHOD'; payload: DeliveryMethod }
   | { type: 'SET_STEP'; payload: GiftState['currentStep'] }
+  | { type: 'SET_RECIPIENT_COUNT'; payload: number }
+  | { type: 'SET_DISCOUNT'; payload: AppliedDiscount | null }
+  | { type: 'HYDRATE'; payload: GiftState }
+  | { type: 'CLEAR_CART' }
   | { type: 'RESET' };

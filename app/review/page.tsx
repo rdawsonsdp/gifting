@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGift } from '@/context/GiftContext';
-import { BuyerInfo } from '@/lib/types';
+import { BuyerInfo, AppliedDiscount } from '@/lib/types';
 import { calculateOrderTotal } from '@/lib/pricing';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import BuyerForm from '@/components/checkout/BuyerForm';
+import PreferredVendorSection, { VendorDoc } from '@/components/checkout/PreferredVendorSection';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import Badge from '@/components/ui/Badge';
@@ -23,6 +24,20 @@ export default function ReviewPage() {
   const [showOrderCompleteModal, setShowOrderCompleteModal] = useState(false);
   const [orderData, setOrderData] = useState<{ orderId: string; orderNumber: string } | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<{
+    orderNumber: string;
+    buyerInfo: BuyerInfo;
+    products: typeof state.selectedProducts;
+    recipients: typeof state.recipients;
+    pricing: typeof pricing;
+    tier?: string;
+    deliveryMethod?: typeof state.deliveryMethod;
+  } | null>(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [vendorDocs, setVendorDocs] = useState<VendorDoc[]>([]);
+  const [vendorNotes, setVendorNotes] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
 
   // Calculate gift total based on package or custom build
   const giftTotal = state.selectedPackage
@@ -160,6 +175,7 @@ export default function ReviewPage() {
         },
         body: JSON.stringify({
           products: state.selectedProducts,
+          selectedPackage: state.selectedPackage || undefined,
           recipients: state.recipients,
           buyerInfo: state.buyerInfo,
           pricing: {
@@ -168,6 +184,9 @@ export default function ReviewPage() {
           },
           deliveryMethod: state.deliveryMethod,
           tier: state.selectedTier?.name || 'Unknown',
+          vendorDocs: vendorDocs.length > 0 ? vendorDocs : undefined,
+          vendorNotes: vendorNotes.trim() || undefined,
+          discount: appliedDiscount || undefined,
         }),
       });
 
@@ -177,14 +196,36 @@ export default function ReviewPage() {
         throw new Error(data.error || 'Failed to create order');
       }
 
-      // Success - show order complete modal
+      // Success - store order data for invoice generation before clearing cart
+      const orderNumber = data.draftOrderNumber || data.draftOrderId;
+
       setOrderData({
         orderId: data.draftOrderId,
-        orderNumber: data.draftOrderNumber || data.draftOrderId,
+        orderNumber: orderNumber,
       });
+
+      // Save invoice data before clearing cart
+      setInvoiceData({
+        orderNumber: orderNumber,
+        buyerInfo: state.buyerInfo!,
+        products: [...state.selectedProducts],
+        recipients: [...state.recipients],
+        pricing: {
+          giftSubtotal: pricing.giftSubtotal,
+          fulfillmentSubtotal: pricing.fulfillmentSubtotal,
+          shippingCost: pricing.shippingCost,
+          total: pricing.total,
+        },
+        tier: state.selectedTier?.name,
+        deliveryMethod: state.deliveryMethod || undefined,
+      });
+
       setOrderCompleted(true);
       setShowOrderCompleteModal(true);
       setSubmitting(false);
+
+      // Clear the cart after successful order
+      dispatch({ type: 'CLEAR_CART' });
     } catch (err) {
       console.error('Error placing order:', err);
       setError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
@@ -195,10 +236,63 @@ export default function ReviewPage() {
     }
   };
 
-  // Check if we have a valid order (either package or tier with products)
-  const hasValidOrder = state.selectedPackage || (state.selectedTier && state.selectedProducts.length > 0);
+  const handleDownloadInvoice = async () => {
+    if (!invoiceData) {
+      setInvoiceError('Invoice data not available');
+      return;
+    }
 
-  if (!hasValidOrder) {
+    setDownloadingInvoice(true);
+    setInvoiceError(null);
+
+    try {
+      const response = await fetch('/api/generate-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderNumber: invoiceData.orderNumber,
+          buyerInfo: invoiceData.buyerInfo,
+          products: invoiceData.products,
+          recipients: invoiceData.recipients,
+          pricing: invoiceData.pricing,
+          tier: invoiceData.tier,
+          deliveryMethod: invoiceData.deliveryMethod,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate invoice');
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `BSB-Invoice-${invoiceData.orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      setInvoiceError('Failed to download invoice. Please try again.');
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
+  // Check if we have a valid order (either package or tier with products)
+  // Skip these checks if an order has been completed (cart was cleared after order)
+  const hasValidOrder = state.selectedPackage || state.selectedProducts.length > 0;
+
+  if (!hasValidOrder && !orderCompleted) {
     return (
       <div className="container mx-auto px-4 py-12">
         <Alert variant="error">
@@ -211,7 +305,7 @@ export default function ReviewPage() {
     );
   }
 
-  if (state.recipients.length === 0) {
+  if (state.recipients.length === 0 && !orderCompleted) {
     return (
       <div className="container mx-auto px-4 py-12">
         <Alert variant="error">
@@ -227,9 +321,11 @@ export default function ReviewPage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="mb-6 sm:mb-8">
-        <Badge variant={state.selectedTier.id as 'bronze' | 'silver' | 'gold' | 'platinum'} className="mb-3 sm:mb-4">
-          {state.selectedTier.name} Tier
-        </Badge>
+        {state.selectedTier && (
+          <Badge variant={state.selectedTier.id as 'bronze' | 'silver' | 'gold' | 'platinum'} className="mb-3 sm:mb-4">
+            {state.selectedTier.name} Tier
+          </Badge>
+        )}
         <h1 className="text-2xl sm:text-3xl font-bold text-[#E98D3D] mb-2 font-[var(--font-playfair)]">
           Review Your Order
         </h1>
@@ -249,9 +345,13 @@ export default function ReviewPage() {
         <div className="order-2 lg:order-1">
           <OrderSummary
             giftContents={state.selectedProducts}
+            selectedPackage={state.selectedPackage}
             recipientCount={recipientCount}
             pricing={pricing}
             deliveryMethod={state.deliveryMethod}
+            discount={appliedDiscount}
+            onDiscountApplied={setAppliedDiscount}
+            discountDisabled={submitting || orderCompleted}
           />
         </div>
 
@@ -282,6 +382,16 @@ export default function ReviewPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Preferred Vendor Section */}
+      <div className="mt-6 sm:mt-8">
+        <PreferredVendorSection
+          vendorDocs={vendorDocs}
+          vendorNotes={vendorNotes}
+          onDocsChange={setVendorDocs}
+          onNotesChange={setVendorNotes}
+        />
       </div>
 
       {/* Place Order Button */}
@@ -324,6 +434,21 @@ export default function ReviewPage() {
           <p className="text-sm sm:text-base text-[#8B7355] mb-4">
             Your invoice has been sent to your email address. Please check your inbox for payment details and order confirmation.
           </p>
+
+          {/* Download Invoice Button */}
+          <div className="mb-4">
+            <Button
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice || !invoiceData}
+              className="w-full sm:w-auto"
+            >
+              {downloadingInvoice ? 'Downloading...' : 'Download Invoice (PDF)'}
+            </Button>
+            {invoiceError && (
+              <p className="text-xs text-red-500 mt-2">{invoiceError}</p>
+            )}
+          </div>
+
           <div className="bg-[#FFF8F0] border border-[#E98D3D]/30 rounded-lg p-4 mt-4">
             <p className="text-sm text-[#333333] font-medium mb-2">
               Questions? We're here to help!

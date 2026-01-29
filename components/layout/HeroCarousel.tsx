@@ -2,20 +2,17 @@
 
 import { useState, useEffect } from 'react';
 
-// Brown Sugar Bakery hero images
+// Candy folder images
 const HERO_IMAGES = [
-  {
-    src: '/images/BSB-Postcard-Cover-Museum.png',
-    alt: 'Brown Sugar Bakery - Chicago Skyline with Field Museum',
-  },
-  {
-    src: '/images/BSB-Postcard-Bridges.png',
-    alt: 'Brown Sugar Bakery - Chicago River with Drawbridges',
-  },
-  {
-    src: '/images/BSB-Postcard-fountain.png',
-    alt: 'Brown Sugar Bakery - Buckingham Fountain',
-  },
+  { src: '/images/candy/15 piece Assorted Cream.png', alt: 'Brown Sugar Bakery - 15 Piece Assorted Cream' },
+  { src: '/images/candy/Assorted Creams Feature.jpeg', alt: 'Brown Sugar Bakery - Assorted Creams' },
+  { src: '/images/candy/Assorted Tortues Feature.jpeg', alt: 'Brown Sugar Bakery - Assorted Tortues' },
+  { src: '/images/candy/BSB-Mint-Meltaway-15pk-Labeled-Final.webp', alt: 'Brown Sugar Bakery - Mint Meltaway 15 Pack' },
+  { src: '/images/candy/BSB-Mint-Meltaway-24pk-Final.webp', alt: 'Brown Sugar Bakery - Mint Meltaway 24 Pack Box' },
+  { src: '/images/candy/BSB-Mint-Meltaway-24pk-Labeled-Final.webp', alt: 'Brown Sugar Bakery - Mint Meltaway 24 Pack' },
+  { src: '/images/candy/Meltaways feature.jpeg', alt: 'Brown Sugar Bakery - Meltaways' },
+  { src: '/images/candy/Sea Salt Caramels Feature.jpeg', alt: 'Brown Sugar Bakery - Sea Salt Caramels' },
+  { src: '/images/candy/Tortues assorted 12pc open box.jpeg', alt: 'Brown Sugar Bakery - Tortues Assorted 12 Piece' },
 ];
 
 interface HeroCarouselProps {
@@ -23,20 +20,15 @@ interface HeroCarouselProps {
   autoRotateInterval?: number; // milliseconds
 }
 
-export default function HeroCarousel({ 
-  className = '', 
-  autoRotateInterval = 5000 
+export default function HeroCarousel({
+  className = '',
+  autoRotateInterval = 5000
 }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-        setIsTransitioning(false);
-      }, 500); // Half of transition duration
+      setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length);
     }, autoRotateInterval);
 
     return () => clearInterval(interval);
@@ -72,27 +64,6 @@ export default function HeroCarousel({
         </div>
       ))}
       
-      {/* Carousel indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[3] flex gap-2">
-        {HERO_IMAGES.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setIsTransitioning(true);
-              setTimeout(() => {
-                setCurrentIndex(index);
-                setIsTransitioning(false);
-              }, 500);
-            }}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? 'w-8 bg-accent-gold'
-                : 'w-2 bg-white/50 hover:bg-white/70'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
     </div>
   );
 }

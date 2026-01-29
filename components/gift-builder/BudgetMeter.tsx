@@ -29,8 +29,8 @@ export default function BudgetMeter({
           </p>
         )}
         {currentSpend > maxBudget && (
-          <p className="text-[#E53935]">
-            Budget exceeded by ${(currentSpend - maxBudget).toFixed(2)}
+          <p className="text-[#E98D3D]">
+            ${(currentSpend - maxBudget).toFixed(2)} above suggested budget — that&apos;s OK!
           </p>
         )}
       </div>

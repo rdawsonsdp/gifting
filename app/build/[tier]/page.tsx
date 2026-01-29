@@ -6,7 +6,9 @@ import { getTierBySlug } from '@/lib/tiers';
 import { useGift } from '@/context/GiftContext';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/gift-builder/ProductCard';
+import PackageCard from '@/components/gift-builder/PackageCard';
 import BudgetMeter from '@/components/gift-builder/BudgetMeter';
+import { PACKAGES, GiftPackage } from '@/lib/packages';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -17,8 +19,10 @@ export default function BuildPage() {
   const router = useRouter();
   const { state, dispatch, getCurrentTotal, canProceedToRecipients } = useGift();
   const [products, setProducts] = useState<Product[]>([]);
+  const [packages, setPackages] = useState<GiftPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recipientCount, setRecipientCount] = useState(state.recipients.length || 1);
 
   const tierSlug = params.tier as string;
   const tier = getTierBySlug(tierSlug);
@@ -30,7 +34,6 @@ export default function BuildPage() {
   }, [tier, dispatch]);
 
   useEffect(() => {
-    // Fetch products from API
     async function fetchProducts() {
       try {
         setLoading(true);
@@ -39,7 +42,6 @@ export default function BuildPage() {
           throw new Error('Failed to fetch products');
         }
         const data = await response.json();
-        // Filter products available for this tier
         const filteredProducts = data.products.filter((p: Product) =>
           p.availableForTiers.includes(tier?.id || '') || p.availableForTiers.length === 0
         );
@@ -48,14 +50,33 @@ export default function BuildPage() {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(`Unable to load products from Shopify: ${errorMessage}. Please check your Shopify configuration.`);
         console.error('Error fetching products:', err);
-        setProducts([]); // Don't use mock data - require Shopify connection
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     }
 
+    async function fetchPackages() {
+      try {
+        const response = await fetch('/api/packages');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
+            setPackages(data.packages);
+          } else {
+            setPackages(PACKAGES);
+          }
+        } else {
+          setPackages(PACKAGES);
+        }
+      } catch {
+        setPackages(PACKAGES);
+      }
+    }
+
     if (tier) {
       fetchProducts();
+      fetchPackages();
     }
   }, [tier]);
 
@@ -70,11 +91,11 @@ export default function BuildPage() {
   const currentTotal = getCurrentTotal();
   const currentTier = state.selectedTier || tier;
 
+  // Filter packages that fit within this tier's budget
+  const filteredPackages = packages.filter(pkg => pkg.price <= currentTier.maxSpend);
+
   const handleAddProduct = (product: Product) => {
-    const newTotal = currentTotal + product.price;
-    if (newTotal <= currentTier.maxSpend) {
-      dispatch({ type: 'ADD_PRODUCT', payload: product });
-    }
+    dispatch({ type: 'ADD_PRODUCT', payload: product });
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -86,9 +107,8 @@ export default function BuildPage() {
     return selected?.quantity || 0;
   };
 
-  const isProductDisabled = (product: Product) => {
-    const newTotal = currentTotal + product.price;
-    return newTotal > currentTier.maxSpend;
+  const isProductDisabled = (_product: Product) => {
+    return false;
   };
 
   const handleContinue = () => {
@@ -110,7 +130,7 @@ export default function BuildPage() {
           Build Your Gift
         </h1>
         <p className="text-sm sm:text-base text-charcoal/70">
-          Select products within your <span className="font-semibold text-primary-brown">${tier.minSpend} - ${tier.maxSpend}</span> budget
+          Starting budget: <span className="font-semibold text-primary-brown">${tier.minSpend}+</span> per recipient. Add as many items as you like.
         </p>
       </div>
 
@@ -149,14 +169,19 @@ export default function BuildPage() {
                 </Card>
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : (products.length === 0 && filteredPackages.length === 0) ? (
             <Alert variant="info" className="mt-6 sm:mt-8">
               No products available for this tier. Please check back later.
             </Alert>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {filteredPackages.map((pkg, index) => (
+                <div key={pkg.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <PackageCard package={pkg} />
+                </div>
+              ))}
               {products.map((product, index) => (
-                <div key={product.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div key={product.id} className="animate-scale-in" style={{ animationDelay: `${(filteredPackages.length + index) * 0.1}s` }}>
                   <ProductCard
                     product={product}
                     currentQuantity={getProductQuantity(product.id)}
@@ -213,12 +238,73 @@ export default function BuildPage() {
 
                 <div className="border-t border-light-brown/30 pt-3 sm:pt-4 mb-3 sm:mb-4">
                   <div className="flex justify-between text-base sm:text-lg font-display font-bold text-primary-brown">
-                    <span>Total:</span>
-                    <span className="text-xl">${currentTotal.toFixed(2)}</span>
+                    <span>Per Recipient:</span>
+                    <span>${currentTotal.toFixed(2)}</span>
                   </div>
                   <p className="text-xs text-light-brown mt-1">
-                    Budget: ${tier.minSpend} - ${tier.maxSpend}
+                    Suggested budget: ${tier.minSpend}+
                   </p>
+                </div>
+
+                {/* Recipient Count */}
+                <div className="border-t border-light-brown/30 pt-3 sm:pt-4 mb-3 sm:mb-4">
+                  <label className="text-xs font-semibold text-primary-brown uppercase tracking-wide mb-2 block">
+                    Number of Recipients
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setRecipientCount(Math.max(1, recipientCount - 1))}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-light-brown/30 text-charcoal/70 hover:bg-cream transition-colors text-lg font-medium"
+                      aria-label="Decrease recipients"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={recipientCount}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val >= 1) setRecipientCount(val);
+                      }}
+                      className="flex-1 text-center font-bold text-primary-brown text-lg border border-light-brown/30 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-accent-gold/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      onClick={() => setRecipientCount(recipientCount + 1)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-light-brown/30 text-charcoal/70 hover:bg-cream transition-colors text-lg font-medium"
+                      aria-label="Increase recipients"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Quick-select presets */}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {[10, 25, 50, 100, 250, 500].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setRecipientCount(n)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                          recipientCount === n
+                            ? 'bg-primary-brown text-white'
+                            : 'bg-cream text-charcoal/70 hover:bg-accent-gold/20 hover:text-primary-brown'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Order Total */}
+                  <div className="mt-3 p-3 bg-cream/50 rounded-xl">
+                    <div className="flex justify-between text-xs text-charcoal/70 mb-1">
+                      <span>{recipientCount} recipient{recipientCount !== 1 ? 's' : ''} × ${currentTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-display font-bold text-primary-brown text-lg">
+                      <span>Order Est.</span>
+                      <span>${(currentTotal * recipientCount).toFixed(2)}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <Button
@@ -226,7 +312,7 @@ export default function BuildPage() {
                   disabled={!canProceedToRecipients()}
                   className="w-full btn-primary"
                 >
-                  Continue to Recipients
+                  Continue to Delivery
                 </Button>
               </>
             )}

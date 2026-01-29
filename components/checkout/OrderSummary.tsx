@@ -1,13 +1,16 @@
-import { SelectedProduct, DeliveryMethod } from '@/lib/types';
+import { SelectedProduct, SelectedPackage, DeliveryMethod, AppliedDiscount } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import { DELIVERY_TIERS, DeliveryTier } from '@/lib/pricing';
+import DiscountCodeInput from './DiscountCodeInput';
 
 interface OrderSummaryProps {
   giftContents: SelectedProduct[];
+  selectedPackage?: SelectedPackage | null;
   recipientCount: number;
   pricing: {
     giftSubtotal: number;
     fulfillmentSubtotal: number;
+    volumeDiscount?: { rate: number; amount: number; label: string; percent: string } | null;
     total: number;
     perRecipientFee: number;
     shippingPerRecipient?: number;
@@ -15,18 +18,27 @@ interface OrderSummaryProps {
     deliveryTierLabel?: string;
   };
   deliveryMethod?: DeliveryMethod | null;
+  discount?: AppliedDiscount | null;
+  onDiscountApplied?: (discount: AppliedDiscount | null) => void;
+  discountDisabled?: boolean;
 }
 
 export default function OrderSummary({
   giftContents,
+  selectedPackage,
   recipientCount,
   pricing,
   deliveryMethod,
+  discount,
+  onDiscountApplied,
+  discountDisabled,
 }: OrderSummaryProps) {
-  const giftTotal = giftContents.reduce(
-    (sum, sp) => sum + sp.product.price * sp.quantity,
-    0
-  );
+  const giftTotal = selectedPackage
+    ? selectedPackage.price
+    : giftContents.reduce(
+        (sum, sp) => sum + sp.product.price * sp.quantity,
+        0
+      );
 
   // Calculate shipping cost for shipped orders (not one-location)
   const isShippedOrder = deliveryMethod && deliveryMethod.id !== 'one-location';
@@ -36,7 +48,9 @@ export default function OrderSummary({
 
   // Delivery fee only applies to one-location delivery, not shipped orders
   const deliveryFee = isDeliveryOrder ? pricing.fulfillmentSubtotal : 0;
-  const grandTotal = pricing.giftSubtotal + deliveryFee + totalShippingCost;
+  const volumeDiscountAmount = pricing.volumeDiscount?.amount ?? 0;
+  const discountAmount = discount?.discountAmount ?? 0;
+  const grandTotal = pricing.giftSubtotal - volumeDiscountAmount + deliveryFee + totalShippingCost - discountAmount;
 
   // Get delivery tier label for display
   const deliveryTierDisplay = pricing.deliveryTier
@@ -52,14 +66,30 @@ export default function OrderSummary({
       {/* Gift Contents */}
       <div className="mb-4 sm:mb-6">
         <h3 className="font-semibold text-[#E98D3D] mb-2 text-sm sm:text-base">Gift Contents</h3>
-        <div className="space-y-2">
-          {giftContents.map((sp) => (
-            <div key={sp.product.id} className="flex justify-between text-xs sm:text-sm">
-              <span className="truncate pr-2">{sp.product.title} × {sp.quantity}</span>
-              <span className="whitespace-nowrap">${(sp.product.price * sp.quantity).toFixed(2)}</span>
+        {selectedPackage ? (
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs sm:text-sm font-medium">
+              <span className="truncate pr-2">{selectedPackage.name}</span>
+              <span className="whitespace-nowrap">${selectedPackage.price.toFixed(2)}</span>
             </div>
-          ))}
-        </div>
+            {selectedPackage.includes.length > 0 && (
+              <ul className="text-xs text-[#8B7355] list-disc list-inside space-y-0.5 mt-1">
+                {selectedPackage.includes.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {giftContents.map((sp) => (
+              <div key={sp.product.id} className="flex justify-between text-xs sm:text-sm">
+                <span className="truncate pr-2">{sp.product.title} × {sp.quantity}</span>
+                <span className="whitespace-nowrap">${(sp.product.price * sp.quantity).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recipient Info */}
@@ -92,6 +122,20 @@ export default function OrderSummary({
             <span className="whitespace-nowrap">${totalShippingCost.toFixed(2)}</span>
           </div>
         )}
+        {pricing.volumeDiscount && volumeDiscountAmount > 0 && (
+          <div className="flex justify-between text-[#2E7D32] font-semibold">
+            <span className="pr-2">Volume Discount ({pricing.volumeDiscount.percent}):</span>
+            <span className="whitespace-nowrap">You Save ${volumeDiscountAmount.toFixed(2)}</span>
+          </div>
+        )}
+        {discount && discountAmount > 0 && (
+          <div className="flex justify-between text-[#2E7D32]">
+            <span className="pr-2">
+              Discount ({discount.valueType === 'PERCENTAGE' ? `${discount.value}% OFF` : discount.title}):
+            </span>
+            <span className="whitespace-nowrap">-${discountAmount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-[#8B7355] text-xs mt-2">
           <span>Tax:</span>
           <span className="whitespace-nowrap">TBD (calculated at checkout)</span>
@@ -103,6 +147,17 @@ export default function OrderSummary({
           </div>
         </div>
       </div>
+
+      {/* Discount Code Input */}
+      {onDiscountApplied && (
+        <div className="mt-4 pt-4 border-t border-[#8B7355]/30">
+          <DiscountCodeInput
+            orderSubtotal={pricing.giftSubtotal}
+            onDiscountApplied={onDiscountApplied}
+            disabled={discountDisabled}
+          />
+        </div>
+      )}
     </Card>
   );
 }

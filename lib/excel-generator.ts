@@ -12,14 +12,17 @@ export interface OrderData {
     shippingCost?: number;
     total: number;
     perRecipientFee: number;
+    discountCode?: string;
+    discountAmount?: number;
   };
   tier: string;
   deliveryMethod?: DeliveryMethod;
+  vendorNotes?: string;
 }
 
 export async function generateRecipientExcel(orderData: OrderData): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  const { draftOrderNumber, buyerInfo, products, recipients, pricing, tier, deliveryMethod } = orderData;
+  const { draftOrderNumber, buyerInfo, products, recipients, pricing, tier, deliveryMethod, vendorNotes } = orderData;
 
   // Sheet 1: Order Summary
   const summarySheet = workbook.addWorksheet('Order Summary');
@@ -64,11 +67,13 @@ export async function generateRecipientExcel(orderData: OrderData): Promise<Buff
     { field: 'Delivery Date', value: deliveryDateFormatted },
     { field: 'Delivery Method', value: deliveryMethod?.name || 'One-Location Delivery' },
     ...(buyerInfo.notes ? [{ field: 'Order Notes', value: buyerInfo.notes }] : []),
+    ...(vendorNotes ? [{ field: 'Vendor Notes', value: vendorNotes }] : []),
     { field: 'Tier', value: tier },
     { field: 'Total Recipients', value: recipients.length.toString() },
     { field: 'Gift Subtotal', value: `$${pricing.giftSubtotal.toFixed(2)}` },
     ...(!isShippedOrder && pricing.fulfillmentSubtotal > 0 ? [{ field: `Delivery Fee (${recipients.length < 500 ? '< 500' : recipients.length < 1500 ? '500-1,499' : '1,500+'} recipients)`, value: `$${pricing.fulfillmentSubtotal.toFixed(2)}` }] : []),
     ...(isShippedOrder && pricing.shippingCost ? [{ field: `Shipping (${deliveryMethod.name})`, value: `$${pricing.shippingCost.toFixed(2)}` }] : []),
+    ...(pricing.discountCode && pricing.discountAmount ? [{ field: `Discount (${pricing.discountCode})`, value: `-$${pricing.discountAmount.toFixed(2)}` }] : []),
     { field: 'Order Total', value: `$${pricing.total.toFixed(2)}` },
   ];
 

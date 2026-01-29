@@ -23,7 +23,7 @@ interface ShopifyPackage {
 export default function PackagePage() {
   const params = useParams();
   const router = useRouter();
-  const { dispatch } = useGift();
+  const { state, dispatch, setCartOpen } = useGift();
   const [pkg, setPkg] = useState<ShopifyPackage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,23 +81,22 @@ export default function PackagePage() {
   }
 
   const handleAddToCart = () => {
+    // Add the package as a product so it goes into the existing build/budget
     dispatch({
-      type: 'SELECT_PACKAGE',
+      type: 'ADD_PRODUCT',
       payload: {
-        package: {
-          id: pkg.id,
-          name: pkg.name,
-          slug: pkg.slug,
-          description: pkg.description,
-          longDescription: pkg.longDescription,
-          price: pkg.price,
-          image: pkg.image,
-          includes: pkg.includes,
-        },
-        quantity: 1,
+        id: pkg.id,
+        title: pkg.name,
+        description: pkg.description,
+        price: pkg.price,
+        image: pkg.image,
+        availableForTiers: [],
+        inventory: 999,
+        variantId: pkg.variantId,
+        slug: pkg.slug,
       },
     });
-    router.push('/recipients');
+    setCartOpen(true);
   };
 
   return (
@@ -215,7 +214,7 @@ export default function PackagePage() {
             onClick={handleAddToCart}
             className="w-full py-4 text-lg font-bold btn-primary mb-6"
           >
-            Continue to Order
+            Add to Cart
           </Button>
 
           {/* Additional Info Icons */}
@@ -263,7 +262,7 @@ export default function PackagePage() {
             onClick={handleAddToCart}
             className="py-3 px-6 text-base font-bold btn-primary"
           >
-            Continue to Order
+            Add to Cart
           </Button>
         </div>
       </div>

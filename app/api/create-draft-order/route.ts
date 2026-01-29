@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createDraftOrder, updateDraftOrderCustomAttributes, appendExcelUrlToDraftOrderNote, sendDraftOrderInvoice } from '@/lib/shopify';
+import { createDraftOrder, updateDraftOrderCustomAttributes, appendExcelUrlToDraftOrderNote, sendDraftOrderInvoice, lookupDiscountCode } from '@/lib/shopify';
 import { generateRecipientExcel } from '@/lib/excel-generator';
 import { saveExcelFile, getExcelFileUrl } from '@/lib/file-storage';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { sendInvoiceSms } from '@/lib/sms';
-import { SelectedProduct, Recipient, BuyerInfo, DeliveryMethod } from '@/lib/types';
+import { SelectedProduct, Recipient, BuyerInfo, DeliveryMethod, AppliedDiscount, SelectedPackage } from '@/lib/types';
 import { calculateOrderTotal } from '@/lib/pricing';
+
+interface VendorDoc {
+  filename: string;
+  url: string;
+}
 
 interface RequestBody {
   products: SelectedProduct[];
+  selectedPackage?: SelectedPackage;
   recipients: Recipient[];
   buyerInfo: BuyerInfo;
   pricing: {
@@ -17,16 +23,23 @@ interface RequestBody {
   };
   deliveryMethod?: DeliveryMethod;
   tier?: string; // Optional tier name for Excel
+  vendorDocs?: VendorDoc[];
+  vendorNotes?: string;
+  discount?: AppliedDiscount;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: RequestBody = await request.json();
-    const { products, recipients, buyerInfo, pricing, deliveryMethod, tier } = body;
+    const { products, selectedPackage, recipients, buyerInfo, pricing, deliveryMethod, tier, vendorDocs, vendorNotes, discount } = body;
 
-    if (!products || products.length === 0) {
+    // Validate that either products or a package is selected
+    const hasProducts = products && products.length > 0;
+    const hasPackage = selectedPackage && selectedPackage.variantId;
+
+    if (!hasProducts && !hasPackage) {
       return NextResponse.json(
-        { error: 'No products selected' },
+        { error: 'No products or package selected' },
         { status: 400 }
       );
     }
@@ -45,13 +58,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build line items with variant IDs
-    const lineItems = products
-      .filter(sp => sp.product.variantId)
-      .map(sp => ({
-        variantId: sp.product.variantId!,
-        quantity: sp.quantity,
-      }));
+    // Build line items with variant IDs - from either products or package
+    let lineItems: { variantId: string; quantity: number }[] = [];
+    let giftTotal: number;
+
+    if (hasPackage) {
+      // Use the selected package
+      lineItems = [{
+        variantId: selectedPackage.variantId!,
+        quantity: selectedPackage.quantity,
+      }];
+      giftTotal = selectedPackage.price;
+    } else {
+      // Use individual products
+      lineItems = products
+        .filter(sp => sp.product.variantId)
+        .map(sp => ({
+          variantId: sp.product.variantId!,
+          quantity: sp.quantity,
+        }));
+      giftTotal = products.reduce(
+        (sum, sp) => sum + sp.product.price * sp.quantity,
+        0
+      );
+    }
 
     if (lineItems.length === 0) {
       return NextResponse.json(
@@ -60,13 +90,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate gift total for Excel
-    const giftTotal = products.reduce(
-      (sum, sp) => sum + sp.product.price * sp.quantity,
-      0
-    );
+    // Create a products array for functions that expect it (for packages, create a synthetic product)
+    const productsForExcel: SelectedProduct[] = hasPackage
+      ? [{
+          product: {
+            id: selectedPackage.id,
+            title: selectedPackage.name,
+            description: selectedPackage.description,
+            price: selectedPackage.price,
+            image: selectedPackage.image,
+            availableForTiers: [],
+            inventory: 999,
+            variantId: selectedPackage.variantId,
+          },
+          quantity: selectedPackage.quantity,
+        }]
+      : products;
+
     // Calculate order pricing (includes 15% delivery fee)
-    const orderPricing = calculateOrderTotal(giftTotal, recipients.length, products);
+    const orderPricing = calculateOrderTotal(giftTotal, recipients.length, productsForExcel);
 
     // Calculate shipping cost for shipped orders (not one-location)
     const isShippedOrder = deliveryMethod && deliveryMethod.id !== 'one-location';
@@ -76,7 +118,37 @@ export async function POST(request: NextRequest) {
 
     // Delivery fee only applies to one-location delivery, not shipped orders
     const deliveryFee = isDeliveryOrder ? orderPricing.fulfillmentSubtotal : 0;
-    const grandTotal = orderPricing.giftSubtotal + deliveryFee + totalShippingCost;
+
+    // Re-validate discount server-side if provided
+    let validatedDiscount: AppliedDiscount | undefined;
+    let discountAmount = 0;
+    if (discount && discount.code) {
+      try {
+        const lookupResult = await lookupDiscountCode(discount.code);
+        if (lookupResult.valid) {
+          if (lookupResult.valueType === 'PERCENTAGE') {
+            discountAmount = Math.round((orderPricing.giftSubtotal * lookupResult.value) / 100 * 100) / 100;
+          } else {
+            discountAmount = Math.min(lookupResult.value, orderPricing.giftSubtotal);
+          }
+          validatedDiscount = {
+            code: discount.code.trim().toUpperCase(),
+            title: lookupResult.title,
+            valueType: lookupResult.valueType,
+            value: lookupResult.value,
+            discountAmount,
+          };
+          console.log('Discount validated server-side:', validatedDiscount);
+        } else {
+          console.warn('Discount code no longer valid at order time:', lookupResult.error);
+          // Proceed without discount
+        }
+      } catch (err) {
+        console.warn('Error re-validating discount, proceeding without:', err);
+      }
+    }
+
+    const grandTotal = orderPricing.giftSubtotal + deliveryFee + totalShippingCost - discountAmount;
 
     // Step 1: Create draft order first to get order number
     const result = await createDraftOrder(
@@ -84,7 +156,9 @@ export async function POST(request: NextRequest) {
       pricing.perRecipientFee,
       recipients.length,
       buyerInfo,
-      recipients
+      recipients,
+      undefined,
+      validatedDiscount
     );
 
     // Step 2: Generate Excel spreadsheet and save to server
@@ -97,7 +171,7 @@ export async function POST(request: NextRequest) {
       const excelBuffer = await generateRecipientExcel({
         draftOrderNumber: result.draftOrderNumber,
         buyerInfo,
-        products,
+        products: productsForExcel,
         recipients,
         pricing: {
           giftSubtotal: orderPricing.giftSubtotal,
@@ -105,9 +179,12 @@ export async function POST(request: NextRequest) {
           shippingCost: totalShippingCost,
           total: grandTotal,
           perRecipientFee: orderPricing.perRecipientFee,
+          discountCode: validatedDiscount?.code,
+          discountAmount: validatedDiscount?.discountAmount,
         },
         tier: tier || 'Unknown',
         deliveryMethod: deliveryMethod || undefined,
+        vendorNotes: vendorNotes || undefined,
       });
       console.log('Excel generated successfully, size:', excelBuffer.length, 'bytes');
 
@@ -157,6 +234,34 @@ export async function POST(request: NextRequest) {
       // Continue without Excel - order is already created
     }
 
+    // Step 4b: Store vendor info as custom attributes on draft order
+    if (vendorDocs?.length || vendorNotes) {
+      try {
+        const vendorAttributes: { key: string; value: string }[] = [];
+
+        if (vendorNotes) {
+          vendorAttributes.push({ key: 'vendor_notes', value: vendorNotes });
+        }
+
+        if (vendorDocs && vendorDocs.length > 0) {
+          vendorAttributes.push({
+            key: 'vendor_doc_urls',
+            value: vendorDocs.map((d) => d.url).join('\n'),
+          });
+          vendorAttributes.push({
+            key: 'vendor_doc_filenames',
+            value: vendorDocs.map((d) => d.filename).join(', '),
+          });
+        }
+
+        await updateDraftOrderCustomAttributes(result.draftOrderId, vendorAttributes);
+        console.log('Vendor info saved to draft order custom attributes');
+      } catch (vendorErr) {
+        console.error('Error saving vendor info to draft order:', vendorErr);
+        // Continue - vendor info is optional
+      }
+    }
+
     // Step 5: Send order confirmation email to customer
     let emailSent = false;
     let emailError: string | null = null;
@@ -175,11 +280,15 @@ export async function POST(request: NextRequest) {
           shippingCost: totalShippingCost,
           total: grandTotal,
           perRecipientFee: orderPricing.perRecipientFee,
+          discountCode: validatedDiscount?.code,
+          discountAmount: validatedDiscount?.discountAmount,
         },
         tier || 'Unknown',
         excelBufferForEmail,
         excelFilenameForEmail,
-        deliveryMethod
+        deliveryMethod,
+        vendorDocs,
+        vendorNotes
       );
       
       if (emailResult.success) {
@@ -214,6 +323,17 @@ export async function POST(request: NextRequest) {
       // Add customer notes if present
       if (buyerInfo.notes) {
         customMessage += `\n\nCustomer Notes:\n${buyerInfo.notes}`;
+      }
+
+      // Add vendor info if present
+      if (vendorDocs?.length || vendorNotes) {
+        customMessage += '\n\nPreferred Vendor Information:';
+        if (vendorNotes) {
+          customMessage += `\n${vendorNotes}`;
+        }
+        if (vendorDocs && vendorDocs.length > 0) {
+          customMessage += `\nVendor Documents Submitted: ${vendorDocs.map((d) => d.filename).join(', ')}`;
+        }
       }
 
       customMessage += '\n\nPlease review the invoice below and click the payment link to complete your purchase.\n\nWe look forward to helping you share the sweetness!\n\n- The Brown Sugar Bakery Team';

@@ -49,6 +49,8 @@ export default function BuyerForm({ onSubmit, initialData, onValidationCheck }: 
     notifyByText: initialData?.notifyByText ?? false,
   };
 
+  const dateInputRef = React.useRef<HTMLInputElement | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -238,16 +240,37 @@ export default function BuyerForm({ onSubmit, initialData, onValidationCheck }: 
           autoComplete="organization"
           inputMode="text"
         />
-        <Input
-          label="Delivery Date"
-          type="date"
-          required
-          {...register('deliveryDate')}
-          error={shouldShowErrors ? errors.deliveryDate?.message : undefined}
-          className="text-sm sm:text-base"
-          min={new Date().toISOString().split('T')[0]}
-          inputMode="none"
-        />
+        <div
+          onMouseEnter={() => {
+            if (dateInputRef.current && window.matchMedia('(hover: hover)').matches) {
+              try {
+                dateInputRef.current.showPicker();
+              } catch (_) {
+                // showPicker not supported in all browsers
+              }
+            }
+          }}
+        >
+          <Input
+            label="Delivery Date"
+            type="date"
+            required
+            {...(() => {
+              const { ref, ...rest } = register('deliveryDate');
+              return {
+                ...rest,
+                ref: (e: HTMLInputElement | null) => {
+                  ref(e);
+                  dateInputRef.current = e;
+                },
+              };
+            })()}
+            error={shouldShowErrors ? errors.deliveryDate?.message : undefined}
+            className="text-sm sm:text-base"
+            min={new Date().toISOString().split('T')[0]}
+            inputMode="none"
+          />
+        </div>
         
         {/* Notes Field */}
         <div className="w-full">

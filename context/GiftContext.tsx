@@ -1,7 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
 import { GiftState, GiftAction, GiftTier, Product, Recipient, BuyerInfo, DeliveryMethod } from '@/lib/types';
+
+const STORAGE_KEY = 'gift-state';
 
 const initialState: GiftState = {
   selectedTier: null,
@@ -11,17 +13,36 @@ const initialState: GiftState = {
   buyerInfo: null,
   deliveryMethod: null,
   currentStep: 'tier',
+  plannedRecipientCount: 1,
+  appliedDiscount: null,
 };
+
+function loadState(): GiftState {
+  if (typeof window === 'undefined') return initialState;
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return initialState;
+}
+
+function saveState(state: GiftState) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
 
 function giftReducer(state: GiftState, action: GiftAction): GiftState {
   switch (action.type) {
-    case 'SELECT_TIER':
+    case 'SELECT_TIER': {
+      const sameTier = state.selectedTier?.id === action.payload.id;
       return {
         ...state,
         selectedTier: action.payload,
-        selectedProducts: [],
+        selectedProducts: sameTier ? state.selectedProducts : [],
         currentStep: 'build',
       };
+    }
 
     case 'ADD_PRODUCT': {
       const existingIndex = state.selectedProducts.findIndex(
@@ -95,13 +116,39 @@ function giftReducer(state: GiftState, action: GiftAction): GiftState {
         deliveryMethod: action.payload,
       };
 
+    case 'SET_RECIPIENT_COUNT':
+      return {
+        ...state,
+        plannedRecipientCount: Math.max(1, action.payload),
+      };
+
+    case 'SET_DISCOUNT':
+      return {
+        ...state,
+        appliedDiscount: action.payload,
+      };
+
     case 'SET_STEP':
       return {
         ...state,
         currentStep: action.payload,
       };
 
+    case 'HYDRATE':
+      return action.payload;
+
+    case 'CLEAR_CART':
+      return {
+        ...state,
+        selectedProducts: [],
+        selectedPackage: null,
+        currentStep: 'tier',
+        plannedRecipientCount: 1,
+        appliedDiscount: null,
+      };
+
     case 'RESET':
+      saveState(initialState);
       return initialState;
 
     default:
@@ -114,12 +161,32 @@ interface GiftContextType {
   dispatch: React.Dispatch<GiftAction>;
   getCurrentTotal: () => number;
   canProceedToRecipients: () => boolean;
+  isCartOpen: boolean;
+  setCartOpen: (open: boolean) => void;
 }
 
 const GiftContext = createContext<GiftContextType | undefined>(undefined);
 
 export function GiftProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(giftReducer, initialState);
+  const [hydrated, setHydrated] = useState(false);
+  const [isCartOpen, setCartOpen] = useState(false);
+
+  // Hydrate state from sessionStorage on mount
+  useEffect(() => {
+    const saved = loadState();
+    if (saved && (saved.selectedProducts.length > 0 || saved.selectedPackage || saved.recipients.length > 0)) {
+      dispatch({ type: 'HYDRATE', payload: saved });
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist state to sessionStorage on every change (after hydration)
+  useEffect(() => {
+    if (hydrated) {
+      saveState(state);
+    }
+  }, [state, hydrated]);
 
   const getCurrentTotal = () => {
     return state.selectedProducts.reduce(
@@ -132,14 +199,16 @@ export function GiftProvider({ children }: { children: ReactNode }) {
     // If a package is selected, can always proceed
     if (state.selectedPackage) return true;
 
-    // For custom builds, check tier budget
-    if (!state.selectedTier) return false;
+    // For promotional path (no tier), just need products
+    if (!state.selectedTier) return state.selectedProducts.length > 0;
+
+    // For custom builds, check minimum spend only (no max limit)
     const total = getCurrentTotal();
-    return total >= state.selectedTier.minSpend && total <= state.selectedTier.maxSpend;
+    return total >= state.selectedTier.minSpend;
   };
 
   return (
-    <GiftContext.Provider value={{ state, dispatch, getCurrentTotal, canProceedToRecipients }}>
+    <GiftContext.Provider value={{ state, dispatch, getCurrentTotal, canProceedToRecipients, isCartOpen, setCartOpen }}>
       {children}
     </GiftContext.Provider>
   );

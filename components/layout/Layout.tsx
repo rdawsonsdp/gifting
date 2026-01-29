@@ -3,6 +3,7 @@
 import { useKeyboardDismiss } from '@/hooks/useKeyboardDismiss';
 import Header from './Header';
 import Footer from './Footer';
+import CartDrawer from '@/components/cart/CartDrawer';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   // Dismiss keyboard when clicking outside inputs on mobile
@@ -15,6 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <Footer />
+      <CartDrawer />
     </div>
   );
 }

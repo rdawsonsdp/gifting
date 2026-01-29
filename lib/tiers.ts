@@ -5,7 +5,7 @@ export const TIERS: GiftTier[] = [
     id: 'bronze',
     name: 'Bronze',
     slug: 'bronze',
-    minSpend: 15,
+    minSpend: 6,
     maxSpend: 25,
     description: 'Perfect for small appreciation gifts',
     suggestedItems: []

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -19,13 +20,24 @@ export default function ProductCard({
   onRemove,
   disabled,
 }: ProductCardProps) {
+  const router = useRouter();
+
+  const handleImageClick = () => {
+    if (product.slug) {
+      router.push(`/product/${product.slug}`);
+    }
+  };
+
   return (
     <Card className="flex flex-col h-full hover-lift group relative overflow-hidden">
       {/* Decorative gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-brown/5 via-transparent to-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
-      
+
       <div className="relative z-10">
-        <div className="aspect-square bg-gray-200 rounded-lg mb-3 sm:mb-4 overflow-hidden relative">
+        <div
+          className="aspect-square bg-gray-200 rounded-lg mb-3 sm:mb-4 overflow-hidden relative cursor-pointer"
+          onClick={handleImageClick}
+        >
           {product.image ? (
             <img
               src={product.image}
@@ -40,6 +52,15 @@ export default function ProductCard({
               </svg>
             </div>
           )}
+          {/* Click for details indicator */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 rounded-full p-2 shadow-lg">
+              <svg className="w-5 h-5 text-primary-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+          </div>
         </div>
         
         <h3 className="font-display font-semibold text-primary-brown mb-2 text-sm sm:text-base line-clamp-2">{product.title}</h3>

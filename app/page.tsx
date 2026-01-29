@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { TIERS } from '@/lib/tiers';
 import { PACKAGES, GiftPackage } from '@/lib/packages';
 import { Product } from '@/lib/types';
@@ -33,6 +34,7 @@ const VIMEO_VIDEO_ID = getVimeoVideoId(VIMEO_URL);
 
 export default function Home() {
   const [packages, setPackages] = useState<GiftPackage[]>(PACKAGES);
+  const [promoProducts, setPromoProducts] = useState<Product[]>([]);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
 
   useEffect(() => {
@@ -42,18 +44,30 @@ export default function Home() {
         if (response.ok) {
           const data = await response.json();
           if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
-            // Use packages from Shopify's Corporate Gift Packages collection
             setPackages(data.packages);
           }
-          // If no packages from Shopify, keep the default PACKAGES
         }
       } catch (error) {
         console.error('Error fetching packages:', error);
-        // Keep default PACKAGES on error
+      }
+    }
+
+    async function fetchPromoProducts() {
+      try {
+        const response = await fetch('/api/promotional-products');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.products && Array.isArray(data.products)) {
+            setPromoProducts(data.products.slice(0, 4));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching promotional products:', error);
       }
     }
 
     fetchPackages();
+    fetchPromoProducts();
   }, []);
 
   return (
@@ -116,7 +130,48 @@ export default function Home() {
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12">
 
-      {/* Value Propositions with E-commerce Card Style */}
+      {/* Select Your Budget — Primary CTA */}
+      <div id="tiers-section" className="mb-10 sm:mb-14 lg:mb-16 relative">
+        <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-10 animate-fade-up">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-brown mb-4 font-display px-2">
+            Show Customers & Employees You Value Them
+          </h2>
+          <p className="text-base sm:text-lg text-charcoal/80 px-2">
+            Thoughtful corporate gifts strengthen relationships and build loyalty. Choose your budget to get started.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
+          {TIERS.map((tier, index) => (
+            <div key={tier.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              <TierCard tier={tier} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Gifting Packages Section */}
+      <div id="packages-section" className="mb-8 sm:mb-12 lg:mb-16 relative">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 animate-fade-up">
+          <p className="text-sm font-semibold text-primary-brown uppercase tracking-wider mb-3">
+            Curated Collections
+          </p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-brown mb-4 font-display px-2">
+            Or Choose a Signature Package
+          </h2>
+          <p className="text-base text-charcoal/70 px-2">
+            Ready-to-send gift packages — no assembly required
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
+          {packages.map((pkg, index) => (
+            <div key={pkg.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              <PackageCard package={pkg} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Value Propositions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12 max-w-6xl mx-auto">
         <div className="glass-card rounded-2xl p-6 text-center hover-lift animate-scale-in delay-100 min-h-[220px] flex flex-col">
           <div className="text-3xl sm:text-4xl mb-3 animate-float">🚚</div>
@@ -155,46 +210,65 @@ export default function Home() {
         </a>
       </div>
 
-      {/* Gifting Packages Section */}
-      <div id="packages-section" className="mb-8 sm:mb-12 lg:mb-16 relative">
-        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 animate-fade-up">
-          <p className="text-sm font-semibold text-primary-brown uppercase tracking-wider mb-3">
-            Curated Collections
-          </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-brown mb-4 font-display px-2">
-            Choose One of our Signature Packages
-          </h2>
-          <p className="text-base text-charcoal/70 px-2">
-            Beautifully curated gift packages ready to delight your recipients
-          </p>
+      {/* Personalized & Promotional Teaser */}
+      {promoProducts.length > 0 && (
+        <div className="mb-8 sm:mb-12 lg:mb-16 relative">
+          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 animate-fade-up">
+            <p className="text-sm font-semibold text-primary-brown uppercase tracking-wider mb-3">
+              Branded & Custom
+            </p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-brown mb-4 font-display px-2">
+              Personalized & Promotional
+            </h2>
+            <p className="text-base text-charcoal/70 px-2">
+              Custom branded merchandise and personalized gifts for your team
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto">
+            {promoProducts.map((product, index) => (
+              <div key={product.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="glass-card rounded-2xl overflow-hidden hover-lift group">
+                  <div className="aspect-square bg-gray-200 overflow-hidden">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.title}
+                        className="w-full h-full object-cover img-zoom"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-cream to-lavender/30">
+                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 sm:p-4">
+                    <h3 className="font-display font-semibold text-primary-brown text-sm sm:text-base truncate">
+                      {product.title}
+                    </h3>
+                    <p className="text-sm font-bold text-primary-brown mt-1">
+                      ${product.price.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-6 sm:mt-8">
+            <Link
+              href="/promotional"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-brown text-white font-semibold rounded-xl hover:bg-[#D67A2E] transition-colors"
+            >
+              View All Promotional Items
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
-          {packages.map((pkg, index) => (
-            <div key={pkg.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-              <PackageCard package={pkg} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Tier Selection with E-commerce Grid */}
-      <div className="mb-6 sm:mb-8 lg:mb-12 relative">
-        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 animate-fade-up">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-brown mb-4 font-display px-2">
-            Or Build Your Own
-          </h2>
-          <p className="text-base text-charcoal/70 px-2">
-            Select a tier that fits your budget and start building your custom gift collection
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
-          {TIERS.map((tier, index) => (
-            <div key={tier.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-              <TierCard tier={tier} />
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Product Carousel */}
       <ProductCarousel autoScroll={true} scrollInterval={4000} />
@@ -229,20 +303,20 @@ export default function Home() {
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center p-3 bg-cream/50 rounded-xl">
-                <span className="text-charcoal font-medium">500 - 1,000 units</span>
+                <span className="text-charcoal font-medium">$500 – $1,000</span>
                 <span className="font-bold text-primary-brown text-lg">5% off</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-cream/50 rounded-xl">
-                <span className="text-charcoal font-medium">1,000 - 2,500 units</span>
+                <span className="text-charcoal font-medium">$1,000 – $2,500</span>
                 <span className="font-bold text-primary-brown text-lg">10% off</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-accent-gold/20 rounded-xl border-2 border-accent-gold/30">
-                <span className="text-charcoal font-medium">2,500+ units</span>
+                <span className="text-charcoal font-medium">$2,500+</span>
                 <span className="font-bold text-primary-brown text-lg">15% off</span>
               </div>
             </div>
             <p className="text-xs text-charcoal/60 mt-4 text-center">
-              Contact us for custom pricing on orders over 5,000 units
+              Contact us for custom pricing on orders over $5,000
             </p>
           </div>
         </div>

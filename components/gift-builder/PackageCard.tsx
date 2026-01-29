@@ -2,10 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { GiftPackage } from '@/lib/packages';
+import { useGift } from '@/context/GiftContext';
 import Button from '@/components/ui/Button';
 
 interface PackageCardProps {
-  package: GiftPackage & { tier?: string | null };
+  package: GiftPackage & { tier?: string | null; variantId?: string };
   image?: string;
 }
 
@@ -32,9 +33,31 @@ const tierConfig: Record<string, { label: string; bg: string; text: string; bord
 
 export default function PackageCard({ package: pkg, image }: PackageCardProps) {
   const router = useRouter();
+  const { state, dispatch, setCartOpen } = useGift();
 
-  const handleSelect = () => {
+  const handleViewDetails = () => {
     router.push(`/package/${pkg.slug}`);
+  };
+
+  const handleAddToGift = () => {
+    dispatch({
+      type: 'SELECT_PACKAGE',
+      payload: {
+        package: {
+          id: pkg.id,
+          name: pkg.name,
+          slug: pkg.slug,
+          description: pkg.description || '',
+          longDescription: pkg.longDescription || '',
+          price: pkg.price,
+          image: pkg.image || '',
+          includes: pkg.includes || [],
+          variantId: (pkg as any).variantId,
+        },
+        quantity: state.plannedRecipientCount,
+      },
+    });
+    setCartOpen(true);
   };
 
   const displayImage = image || pkg.image;
@@ -62,8 +85,11 @@ export default function PackageCard({ package: pkg, image }: PackageCardProps) {
           <div className="sparkle sparkle-6"></div>
         </div>
 
-        {/* Package Image */}
-        <div className="aspect-square bg-gradient-to-br from-cream to-lavender/30 overflow-hidden relative">
+        {/* Package Image - Clickable */}
+        <div
+          className="aspect-square bg-gradient-to-br from-cream to-lavender/30 overflow-hidden relative cursor-pointer"
+          onClick={handleViewDetails}
+        >
           {displayImage ? (
             <img
               src={displayImage}
@@ -86,14 +112,24 @@ export default function PackageCard({ package: pkg, image }: PackageCardProps) {
             </div>
           )}
 
+          {/* Click for details indicator */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 rounded-full p-2.5 shadow-lg">
+              <svg className="w-6 h-6 text-primary-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+          </div>
+
           {/* Golden overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-amber-300/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-amber-300/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
           {/* Corner gilded accents */}
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-amber-400/60 rounded-tl-xl"></div>
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-amber-400/60 rounded-tr-xl"></div>
-          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-amber-400/60 rounded-bl-xl"></div>
-          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-amber-400/60 rounded-br-xl"></div>
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-amber-400/60 rounded-tl-xl pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-amber-400/60 rounded-tr-xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-amber-400/60 rounded-bl-xl pointer-events-none"></div>
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-amber-400/60 rounded-br-xl pointer-events-none"></div>
         </div>
 
         {/* Package Info */}
@@ -117,10 +153,10 @@ export default function PackageCard({ package: pkg, image }: PackageCardProps) {
             )}
             <div className="mt-auto">
               <Button
-                onClick={handleSelect}
+                onClick={handleAddToGift}
                 className="w-full text-sm sm:text-base py-2.5 sm:py-3 btn-primary"
               >
-                View Package
+                Add to Gift
               </Button>
             </div>
           </div>

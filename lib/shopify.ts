@@ -1,14 +1,86 @@
-import { Product, SelectedProduct, Recipient, BuyerInfo } from './types';
+import { Product, SelectedProduct, Recipient, BuyerInfo, AppliedDiscount } from './types';
 import FormData from 'form-data';
 
 const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
+const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
+const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
+// Legacy token support (fallback)
 const SHOPIFY_ADMIN_API_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
 
-if (!SHOPIFY_STORE_DOMAIN || !SHOPIFY_ADMIN_API_ACCESS_TOKEN) {
-  console.warn('Shopify credentials not configured. Using mock data.');
+if (!SHOPIFY_STORE_DOMAIN) {
+  console.warn('Shopify store domain not configured.');
+}
+
+if (!SHOPIFY_CLIENT_ID || !SHOPIFY_CLIENT_SECRET) {
+  if (!SHOPIFY_ADMIN_API_ACCESS_TOKEN) {
+    console.warn('Shopify credentials not configured. Using mock data.');
+  }
 }
 
 const SHOPIFY_GRAPHQL_URL = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/graphql.json`;
+
+// Token cache for client credentials grant
+let cachedToken: string | null = null;
+let tokenExpiresAt: number = 0;
+
+/**
+ * Get access token using client credentials grant (OAuth 2.0)
+ * Tokens expire after 24 hours (86399 seconds)
+ */
+async function getAccessToken(): Promise<string> {
+  // If we have a legacy token configured, use it (doesn't expire)
+  if (SHOPIFY_ADMIN_API_ACCESS_TOKEN && !SHOPIFY_CLIENT_ID) {
+    return SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+  }
+
+  // Check if we have a valid cached token (refresh 5 minutes before expiry)
+  const now = Date.now();
+  if (cachedToken && tokenExpiresAt > now + 5 * 60 * 1000) {
+    return cachedToken;
+  }
+
+  // Need to fetch a new token using client credentials
+  if (!SHOPIFY_CLIENT_ID || !SHOPIFY_CLIENT_SECRET) {
+    throw new Error('Shopify client credentials not configured');
+  }
+
+  console.log('Fetching new Shopify access token using client credentials...');
+
+  const response = await fetch(
+    `https://${SHOPIFY_STORE_DOMAIN}/admin/oauth/access_token`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: SHOPIFY_CLIENT_ID,
+        client_secret: SHOPIFY_CLIENT_SECRET,
+      }).toString(),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.access_token) {
+    throw new Error('No access token in response');
+  }
+
+  // Cache the token
+  cachedToken = data.access_token;
+  // Set expiry time (expires_in is in seconds, convert to milliseconds)
+  tokenExpiresAt = now + (data.expires_in || 86399) * 1000;
+
+  console.log('Successfully obtained new Shopify access token');
+
+  return cachedToken;
+}
 
 interface GraphQLResponse<T> {
   data?: T;
@@ -16,15 +88,17 @@ interface GraphQLResponse<T> {
 }
 
 async function shopifyRequest<T>(query: string, variables?: Record<string, any>): Promise<T> {
-  if (!SHOPIFY_STORE_DOMAIN || !SHOPIFY_ADMIN_API_ACCESS_TOKEN) {
-    throw new Error('Shopify credentials not configured');
+  if (!SHOPIFY_STORE_DOMAIN) {
+    throw new Error('Shopify store domain not configured');
   }
+
+  const accessToken = await getAccessToken();
 
   const response = await fetch(SHOPIFY_GRAPHQL_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_ACCESS_TOKEN,
+      'X-Shopify-Access-Token': accessToken,
     },
     body: JSON.stringify({ query, variables }),
   });
@@ -472,13 +546,221 @@ export async function fetchSpecialOfferProducts(): Promise<Product[]> {
   }
 }
 
+// Fetch products from the "Corporate Gifting Promotional" collection
+export async function fetchPromotionalProducts(): Promise<Product[]> {
+  const collectionHandle = process.env.SHOPIFY_PROMOTIONAL_COLLECTION_HANDLE || 'corporate-gifting-promotional';
+
+  const query = `
+    query getCollectionProducts($handle: String!) {
+      collectionByHandle(handle: $handle) {
+        id
+        title
+        products(first: 50) {
+          edges {
+            node {
+              id
+              title
+              description
+              handle
+              featuredImage {
+                url
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price
+                    compareAtPrice
+                    inventoryQuantity
+                  }
+                }
+              }
+              tags
+              shippingCost: metafield(namespace: "custom", key: "shipping_cost") {
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyRequest<{
+      collectionByHandle: {
+        id: string;
+        title: string;
+        products: {
+          edges: Array<{
+            node: {
+              id: string;
+              title: string;
+              description: string;
+              handle: string;
+              featuredImage: { url: string } | null;
+              variants: {
+                edges: Array<{
+                  node: {
+                    id: string;
+                    price: string;
+                    compareAtPrice: string | null;
+                    inventoryQuantity: number;
+                  };
+                }>;
+              };
+              tags: string[];
+              shippingCost: { value: string } | null;
+            };
+          }>;
+        };
+      } | null;
+    }>(query, { handle: collectionHandle });
+
+    if (!data.collectionByHandle) {
+      console.warn(`Promotional collection "${collectionHandle}" not found.`);
+      return [];
+    }
+
+    if (!data.collectionByHandle.products.edges.length) {
+      console.warn(`Promotional collection "${collectionHandle}" exists but has no products.`);
+      return [];
+    }
+
+    return data.collectionByHandle.products.edges.map(({ node }) => {
+      const variant = node.variants.edges[0]?.node;
+      let shippingCost: number | undefined;
+      if (node.shippingCost?.value) {
+        const parsed = parseFloat(node.shippingCost.value);
+        shippingCost = isNaN(parsed) ? undefined : parsed;
+      }
+      return {
+        id: node.id.split('/').pop() || '',
+        title: node.title,
+        description: node.description || '',
+        price: parseFloat(variant?.price || '0'),
+        image: node.featuredImage?.url || '',
+        availableForTiers: node.tags.filter(tag => ['bronze', 'silver', 'gold', 'platinum'].includes(tag.toLowerCase())),
+        inventory: variant?.inventoryQuantity || 0,
+        variantId: variant?.id.split('/').pop() || undefined,
+        slug: node.handle,
+        compareAtPrice: variant?.compareAtPrice ? parseFloat(variant.compareAtPrice) : undefined,
+        shippingCost,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching promotional products:', error);
+    return [];
+  }
+}
+
+/**
+ * Lookup a discount code via Shopify Admin REST API.
+ * Uses /discount_codes/lookup.json + /price_rules/{id}.json
+ * which require the `read_price_rules` scope.
+ */
+export async function lookupDiscountCode(code: string): Promise<
+  | { valid: true; title: string; valueType: 'PERCENTAGE' | 'FIXED_AMOUNT'; value: number }
+  | { valid: false; error: string }
+> {
+  if (!SHOPIFY_STORE_DOMAIN || !SHOPIFY_ADMIN_API_ACCESS_TOKEN) {
+    return { valid: false, error: 'Shopify credentials not configured' };
+  }
+
+  const normalizedCode = code.trim().toUpperCase();
+  const restBase = `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01`;
+
+  try {
+    // Step 1: Look up the discount code to get its price_rule_id
+    // Shopify returns a 303 redirect; we follow it manually to preserve the auth header
+    const lookupUrl = `${restBase}/discount_codes/lookup.json?code=${encodeURIComponent(normalizedCode)}`;
+    let lookupRes = await fetch(lookupUrl, {
+      headers: { 'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_ACCESS_TOKEN },
+      redirect: 'manual',
+    });
+
+    // Follow redirect manually so auth header is preserved
+    if (lookupRes.status === 301 || lookupRes.status === 302 || lookupRes.status === 303) {
+      const redirectUrl = lookupRes.headers.get('location');
+      if (redirectUrl) {
+        const fullUrl = redirectUrl.startsWith('http') ? redirectUrl : `https://${SHOPIFY_STORE_DOMAIN}${redirectUrl}`;
+        lookupRes = await fetch(fullUrl, {
+          headers: { 'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_ACCESS_TOKEN },
+        });
+      }
+    }
+
+    if (lookupRes.status === 404) {
+      return { valid: false, error: 'Discount code not found' };
+    }
+    if (!lookupRes.ok) {
+      const errText = await lookupRes.text();
+      console.error('Discount lookup failed:', lookupRes.status, errText);
+      return { valid: false, error: 'Failed to validate discount code' };
+    }
+
+    const lookupData = await lookupRes.json();
+    const discountCode = lookupData.discount_code;
+    if (!discountCode) {
+      return { valid: false, error: 'Discount code not found' };
+    }
+
+    const priceRuleId = discountCode.price_rule_id;
+    if (!priceRuleId) {
+      return { valid: false, error: 'Discount code has no associated price rule' };
+    }
+
+    // Step 2: Fetch the price rule to get the value details
+    const priceRuleUrl = `${restBase}/price_rules/${priceRuleId}.json`;
+    const priceRuleRes = await fetch(priceRuleUrl, {
+      headers: { 'X-Shopify-Access-Token': SHOPIFY_ADMIN_API_ACCESS_TOKEN },
+    });
+
+    if (!priceRuleRes.ok) {
+      const errText = await priceRuleRes.text();
+      console.error('Price rule fetch failed:', priceRuleRes.status, errText);
+      return { valid: false, error: 'Failed to retrieve discount details' };
+    }
+
+    const priceRuleData = await priceRuleRes.json();
+    const rule = priceRuleData.price_rule;
+    if (!rule) {
+      return { valid: false, error: 'Price rule not found' };
+    }
+
+    // Check date range
+    const now = new Date();
+    if (rule.starts_at && new Date(rule.starts_at) > now) {
+      return { valid: false, error: 'This discount code is not yet active' };
+    }
+    if (rule.ends_at && new Date(rule.ends_at) < now) {
+      return { valid: false, error: 'This discount code has expired' };
+    }
+
+    // Determine value type and value
+    // Shopify REST price rule value_type: "percentage" or "fixed_amount"
+    // value is negative (e.g. "-10.0" for 10% off or "-5.00" for $5 off)
+    const valueType = rule.value_type === 'percentage' ? 'PERCENTAGE' : 'FIXED_AMOUNT';
+    const rawValue = parseFloat(rule.value);
+    const value = Math.abs(rawValue); // Shopify stores as negative
+
+    const title = rule.title || normalizedCode;
+
+    return { valid: true, title, valueType, value };
+  } catch (error) {
+    console.error('Error looking up discount code:', error);
+    return { valid: false, error: 'Failed to validate discount code' };
+  }
+}
+
 export async function createDraftOrder(
   lineItems: Array<{ variantId: string; quantity: number }>,
   fulfillmentFee: number,
   recipientCount: number,
   buyerInfo: BuyerInfo,
   recipientData: Recipient[],
-  excelFileUrl?: string
+  excelFileUrl?: string,
+  appliedDiscount?: AppliedDiscount
 ): Promise<{ draftOrderId: string; draftOrderNumber: string; invoiceUrl: string }> {
   // Create line items for products
   const productLineItems = lineItems.map(item => ({
@@ -525,7 +807,7 @@ ${buyerInfo.notes ? `\nOrder Notes:\n${buyerInfo.notes}` : ''}
 
 Order Details:
 - Total Recipients: ${recipientCount}
-- Delivery Fee: $${deliveryFee.toFixed(2)}
+- Delivery Fee: $${deliveryFee.toFixed(2)}${appliedDiscount ? `\n- Discount (${appliedDiscount.code}): -$${appliedDiscount.discountAmount.toFixed(2)}` : ''}
 
 Note: Complete recipient list is available in the Excel spreadsheet (link will be added below).`;
 
@@ -557,6 +839,12 @@ Note: Complete recipient list is available in the Excel spreadsheet (link will b
         lastName: string;
         company: string;
         phone: string;
+      };
+      appliedDiscount?: {
+        title: string;
+        description: string;
+        value: number;
+        valueType: 'PERCENTAGE' | 'FIXED_AMOUNT';
       };
       customLineItems?: Array<{
         title: string;
@@ -590,6 +878,16 @@ Note: Complete recipient list is available in the Excel spreadsheet (link will b
             value: excelFileUrl,
           },
         ] : []),
+        ...(appliedDiscount ? [
+          {
+            key: 'discount_code',
+            value: appliedDiscount.code,
+          },
+          {
+            key: 'discount_amount',
+            value: appliedDiscount.discountAmount.toFixed(2),
+          },
+        ] : []),
       ],
       note,
       email: buyerInfo.email,
@@ -600,6 +898,14 @@ Note: Complete recipient list is available in the Excel spreadsheet (link will b
         company: buyerInfo.company,
         phone: buyerInfo.phone,
       },
+      ...(appliedDiscount ? {
+        appliedDiscount: {
+          title: appliedDiscount.title,
+          description: `Discount code: ${appliedDiscount.code}`,
+          value: appliedDiscount.value,
+          valueType: appliedDiscount.valueType,
+        },
+      } : {}),
       // Note: customLineItems removed for MVP - delivery fee added to note and customAttributes
       // Staff will manually add delivery fee as line item in Shopify admin
     },
