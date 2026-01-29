@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGift } from '@/context/GiftContext';
 import { AppliedDiscount } from '@/lib/types';
-import GiftCardAddon from './GiftCardAddon';
+import { getVolumeDiscount } from '@/lib/pricing';
 
 // Compact discount code input for cart drawer
 function CartDiscountCode({
@@ -432,8 +432,6 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              {/* Gift Card Add-on Placeholder */}
-              <GiftCardAddon />
 
               {/* Discount Code Section */}
               <CartDiscountCode
@@ -464,6 +462,42 @@ export default function CartDrawer() {
                   ${(giftSubtotal * recipientCount).toFixed(2)}
                 </span>
               </div>
+              {/* Volume Discount */}
+              {(() => {
+                const orderSubtotal = giftSubtotal * recipientCount;
+                const volumeDiscount = getVolumeDiscount(orderSubtotal);
+                if (volumeDiscount) {
+                  return (
+                    <div className="flex justify-between text-sm text-green-600 font-semibold pt-1">
+                      <span>Volume Discount ({volumeDiscount.percent})</span>
+                      <span>-${volumeDiscount.amount.toFixed(2)}</span>
+                    </div>
+                  );
+                }
+                // Show discount tier hint when close to a threshold
+                if (orderSubtotal >= 400 && orderSubtotal < 500) {
+                  return (
+                    <div className="text-xs text-amber-600 pt-1">
+                      Add ${(500 - orderSubtotal).toFixed(2)} more to get 5% off!
+                    </div>
+                  );
+                }
+                if (orderSubtotal >= 900 && orderSubtotal < 1000) {
+                  return (
+                    <div className="text-xs text-amber-600 pt-1">
+                      Add ${(1000 - orderSubtotal).toFixed(2)} more to get 10% off!
+                    </div>
+                  );
+                }
+                if (orderSubtotal >= 2300 && orderSubtotal < 2500) {
+                  return (
+                    <div className="text-xs text-amber-600 pt-1">
+                      Add ${(2500 - orderSubtotal).toFixed(2)} more to get 15% off!
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Weight estimate */}
