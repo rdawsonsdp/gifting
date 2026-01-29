@@ -441,7 +441,7 @@ export default function ReviewPage() {
             Thank You for Your Order!
           </p>
           <p className="text-sm sm:text-base text-[#8B7355] mb-4">
-            Your invoice has been sent to your email address. Please check your inbox for payment details and order confirmation.
+            Your invoice has been sent to <span className="font-semibold text-[#E98D3D]">{invoiceData?.buyerInfo?.email}</span>. Please check your inbox for payment details and order confirmation.
           </p>
 
           {/* Download Invoice Button */}
