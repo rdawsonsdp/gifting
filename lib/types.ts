@@ -69,7 +69,7 @@ export interface SelectedPackage {
 }
 
 export interface DeliveryMethod {
-  id: 'factory-pickup' | 'individual' | 'local-delivery' | 'heavy-order';
+  id: 'factory-pickup' | 'individual' | 'local-delivery' | 'heavy-order' | 'one-location';
   name: string;
   price: number;
   estimatedDays?: string;
