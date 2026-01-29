@@ -20,7 +20,6 @@ if (fs.existsSync(envPath)) {
 async function main() {
   // Dynamic import after env is loaded
   const { sendOrderConfirmationEmail } = await import('../lib/email');
-  const { BuyerInfo, SelectedProduct, Recipient, DeliveryMethod } = await import('../lib/types');
 
   // Test data
   const testBuyerInfo = {

@@ -79,7 +79,7 @@ async function getAccessToken(): Promise<string> {
 
   console.log('Successfully obtained new Shopify access token');
 
-  return cachedToken;
+  return data.access_token;
 }
 
 interface GraphQLResponse<T> {

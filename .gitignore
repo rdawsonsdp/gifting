@@ -45,3 +45,4 @@ next-env.d.ts
 data/*.json
 excel-files/
 vendor-docs/
+import.env

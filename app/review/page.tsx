@@ -29,7 +29,12 @@ export default function ReviewPage() {
     buyerInfo: BuyerInfo;
     products: typeof state.selectedProducts;
     recipients: typeof state.recipients;
-    pricing: typeof pricing;
+    pricing: {
+      giftSubtotal: number;
+      fulfillmentSubtotal: number;
+      shippingCost?: number;
+      total: number;
+    };
     tier?: string;
     deliveryMethod?: typeof state.deliveryMethod;
   } | null>(null);
@@ -204,6 +209,10 @@ export default function ReviewPage() {
         orderNumber: orderNumber,
       });
 
+      // Calculate shipping cost for invoice
+      const isShippedOrder = state.deliveryMethod && state.deliveryMethod.id !== 'one-location';
+      const shippingCost = isShippedOrder ? (state.deliveryMethod?.price || 0) * state.recipients.length : 0;
+
       // Save invoice data before clearing cart
       setInvoiceData({
         orderNumber: orderNumber,
@@ -213,7 +222,7 @@ export default function ReviewPage() {
         pricing: {
           giftSubtotal: pricing.giftSubtotal,
           fulfillmentSubtotal: pricing.fulfillmentSubtotal,
-          shippingCost: pricing.shippingCost,
+          shippingCost: shippingCost,
           total: pricing.total,
         },
         tier: state.selectedTier?.name,
